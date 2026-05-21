@@ -79,6 +79,16 @@ splashEnter.addEventListener('click', () => {
   setTimeout(() => splash.remove(), 1000);
 });
 
+// Touch expand for capability and focus items (mobile)
+let touchMoved = false;
+document.querySelectorAll('.capability-item, .focus-item').forEach(item => {
+  item.addEventListener('touchstart', () => { touchMoved = false; }, { passive: true });
+  item.addEventListener('touchmove',  () => { touchMoved = true;  }, { passive: true });
+  item.addEventListener('touchend', () => {
+    if (!touchMoved) item.classList.toggle('expanded');
+  });
+});
+
 // Scroll-driven word illumination on philosophy quote
 const quoteWords = document.querySelectorAll('.philosophy-quote .word');
 

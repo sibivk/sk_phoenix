@@ -401,6 +401,31 @@ body:has(button:hover) .cursor {
 }
 
 /* ============================
+   STAGGER DELAY CLASSES
+   (replaces inline style attrs — required for strict CSP)
+   ============================ */
+
+/* Hero entrance delays (--delay var) */
+.dh-1 { --delay: 0.2s; }
+.dh-2 { --delay: 0.4s; }
+.dh-3 { --delay: 0.65s; }
+.dh-4 { --delay: 0.75s; }
+.dh-5 { --delay: 1.1s; }
+
+/* Scroll reveal stagger delays (--d var) */
+.d-1 { --d: 0.05s; }
+.d-2 { --d: 0.10s; }
+.d-3 { --d: 0.15s; }
+.d-4 { --d: 0.20s; }
+.d-5 { --d: 0.25s; }
+.d-6 { --d: 0.30s; }
+
+/* Music icon visibility via class — no inline style needed */
+.music-icon-pause { display: none; }
+.music-btn.playing .music-icon-pause { display: inline; }
+.music-btn.playing .music-icon-play  { display: none; }
+
+/* ============================
    SCROLL REVEAL
    ============================ */
 .reveal {

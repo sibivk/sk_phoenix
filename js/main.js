@@ -51,16 +51,12 @@ const observer = new IntersectionObserver(entries => {
 reveals.forEach(el => observer.observe(el));
 
 // Background music
-const audio   = document.getElementById('bgAudio');
+const audio    = document.getElementById('bgAudio');
 const musicBtn = document.getElementById('musicBtn');
-const iconPlay  = musicBtn.querySelector('.music-icon-play');
-const iconPause = musicBtn.querySelector('.music-icon-pause');
 
 audio.volume = 0.4;
 
 function setPlaying(playing) {
-  iconPlay.style.display  = playing ? 'none'  : '';
-  iconPause.style.display = playing ? ''      : 'none';
   musicBtn.classList.toggle('playing', playing);
 }
 

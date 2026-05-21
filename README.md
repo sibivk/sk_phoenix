@@ -17,7 +17,7 @@ Personal website for **Sibi V. Kaitharath** — Systems Architecture · Quantita
 | Frontend    | Static HTML/CSS/JS    |
 | Web server  | nginx (alpine)        |
 | Container   | Podman                |
-| Hosting     | Linux server, port 8090 |
+| Hosting     | Linux server, port 9000 |
 
 ## File Structure
 
@@ -43,7 +43,7 @@ podman rmi sk_phoenix:latest 2>/dev/null
 podman build -t sk_phoenix:latest .
 
 # Run on port 8090
-podman run -d --name sk_phoenix -p 8090:80 sk_phoenix:latest
+podman run -d --name sk_phoenix -p 9000:80 sk_phoenix:latest
 ```
 
 Visit: `http://<server-ip>:8090`

@@ -462,32 +462,102 @@ body:has(button:hover) .cursor {
 }
 
 .capability-item {
-  padding: 1.7rem 0 1.7rem 1.6rem;
+  padding: 1.6rem 0 1.6rem 1.5rem;
   font-size: clamp(0.85rem, 1.15vw, 1.05rem);
   font-weight: 300;
   letter-spacing: 0.04em;
   color: rgba(255,255,255,0.7);
   border-bottom: 1px solid var(--grey-dim);
   position: relative;
-  transition: color 0.3s ease, padding-left 0.35s ease;
+  transition: padding-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
 }
 
 .capability-item::before {
   content: '—';
   position: absolute;
   left: 0;
-  top: 1.7rem;
+  top: 1.6rem;
   color: rgba(255,255,255,0.18);
   transition: color 0.3s ease;
 }
 
-.capability-item:hover {
-  color: var(--white);
-  padding-left: 2.6rem;
+.capability-item:hover,
+.capability-item.expanded {
+  padding-left: 2.4rem;
 }
 
-.capability-item:hover::before {
+.capability-item:hover::before,
+.capability-item.expanded::before {
   color: rgba(255,255,255,0.5);
+}
+
+/* Item header row */
+.item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.item-title {
+  color: rgba(255,255,255,0.7);
+  transition: color 0.3s ease;
+}
+
+.capability-item:hover .item-title,
+.capability-item.expanded .item-title {
+  color: var(--white);
+}
+
+/* Toggle +/x indicator */
+.item-toggle {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 200;
+  color: rgba(255,255,255,0.2);
+  flex-shrink: 0;
+  line-height: 1;
+  user-select: none;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.3s ease;
+}
+
+.capability-item:hover .item-toggle,
+.capability-item.expanded .item-toggle,
+.focus-item:hover .item-toggle,
+.focus-item.expanded .item-toggle {
+  transform: rotate(45deg);
+  color: rgba(255,255,255,0.65);
+}
+
+/* Expand description */
+.item-desc {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  font-size: 0.76rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.42);
+  line-height: 1.85;
+  letter-spacing: 0.025em;
+  padding-top: 0;
+  padding-right: 2.5rem;
+  transition: max-height  0.55s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity      0.4s  ease 0.08s,
+              transform    0.4s  ease 0.08s,
+              padding-top  0.4s  ease;
+}
+
+.capability-item:hover .item-desc,
+.capability-item.expanded .item-desc,
+.focus-item:hover .item-desc,
+.focus-item.expanded .item-desc {
+  max-height: 200px;
+  opacity: 1;
+  transform: translateY(0);
+  padding-top: 0.85rem;
 }
 
 /* ============================
@@ -537,18 +607,30 @@ body:has(button:hover) .cursor {
 
 .focus-item {
   display: flex;
-  align-items: baseline;
-  gap: 2.5rem;
+  flex-direction: column;
   padding: 1.5rem 0;
   border-bottom: 1px solid var(--grey-dim);
   transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.focus-header {
+  display: flex;
+  align-items: baseline;
+  gap: 2.5rem;
+  width: 100%;
+}
+
+.focus-header .item-toggle {
+  margin-left: auto;
 }
 
 .focus-list:hover .focus-item {
   opacity: 0.28;
 }
 
-.focus-list:hover .focus-item:hover {
+.focus-list:hover .focus-item:hover,
+.focus-list:hover .focus-item.expanded {
   opacity: 1;
 }
 

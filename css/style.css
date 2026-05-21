@@ -618,3 +618,85 @@ body:has(button:hover) .cursor {
     display: none;
   }
 }
+
+/* ============================
+   SPLASH SCREEN
+   ============================ */
+.splash {
+  position: fixed;
+  inset: 0;
+  background: var(--black);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.splash.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  animation: splashIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes splashIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.splash-name {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.55em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+
+.splash-line {
+  width: 1px;
+  height: 48px;
+  background: rgba(255,255,255,0.15);
+}
+
+.splash-enter {
+  background: transparent;
+  border: none;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  letter-spacing: 0.35em;
+  color: rgba(255,255,255,0.6);
+  cursor: none;
+  outline: none;
+  transition: color 0.35s ease, letter-spacing 0.35s ease;
+  padding: 0.5rem 1.5rem;
+  position: relative;
+}
+
+.splash-enter::after {
+  content: '';
+  position: absolute;
+  bottom: 0.3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 1px;
+  background: rgba(255,255,255,0.4);
+  transition: width 0.4s ease;
+}
+
+.splash-enter:hover {
+  color: var(--white);
+  letter-spacing: 0.45em;
+}
+
+.splash-enter:hover::after {
+  width: 80%;
+}

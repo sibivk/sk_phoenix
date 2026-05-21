@@ -73,16 +73,15 @@ musicBtn.addEventListener('click', () => {
   }
 });
 
-// Try autoplay on first user interaction with the page
-let autoplayAttempted = false;
-function tryAutoplay() {
-  if (autoplayAttempted) return;
-  autoplayAttempted = true;
+// Splash screen — dismisses on Enter click and starts audio
+const splash = document.getElementById('splash');
+const splashEnter = document.getElementById('splashEnter');
+
+splashEnter.addEventListener('click', () => {
   audio.play().then(() => setPlaying(true)).catch(() => {});
-}
-document.addEventListener('click', tryAutoplay, { once: true });
-document.addEventListener('keydown', tryAutoplay, { once: true });
-document.addEventListener('scroll', tryAutoplay, { once: true, passive: true });
+  splash.classList.add('hidden');
+  setTimeout(() => splash.remove(), 1000);
+});
 
 // Subtle parallax on hero image
 const heroImg = document.getElementById('heroImg');

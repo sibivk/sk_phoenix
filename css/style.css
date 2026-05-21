@@ -507,6 +507,18 @@ body:has(button:hover) .cursor {
   margin-bottom: 2.5rem;
 }
 
+/* Scroll-driven word illumination */
+.philosophy-quote .word {
+  color: rgba(255, 255, 255, var(--word-opacity, 0.12));
+  transition: color 0.06s linear,
+              text-shadow 0.3s ease;
+  display: inline;
+}
+
+.philosophy-quote .word-key.word-lit {
+  text-shadow: 0 0 35px rgba(255, 255, 255, 0.22);
+}
+
 .philosophy-sub {
   font-size: 0.82rem;
   font-weight: 300;

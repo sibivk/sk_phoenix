@@ -79,6 +79,28 @@ splashEnter.addEventListener('click', () => {
   setTimeout(() => splash.remove(), 1000);
 });
 
+// Scroll-driven word illumination on philosophy quote
+const quoteWords = document.querySelectorAll('.philosophy-quote .word');
+
+function illuminateWords() {
+  if (!quoteWords.length) return;
+  const vh = window.innerHeight;
+
+  quoteWords.forEach(word => {
+    const rect   = word.getBoundingClientRect();
+    const center = rect.top + rect.height * 0.5;
+    // Word illuminates as it scrolls from 88% to 50% of viewport height
+    const progress = Math.max(0, Math.min(1, (vh * 0.88 - center) / (vh * 0.38)));
+    const opacity  = 0.12 + progress * 0.88;
+    word.style.setProperty('--word-opacity', opacity.toFixed(3));
+    word.classList.toggle('word-lit', progress >= 0.98);
+  });
+}
+
+window.addEventListener('scroll', illuminateWords, { passive: true });
+window.addEventListener('resize', illuminateWords, { passive: true });
+illuminateWords();
+
 // Subtle parallax on hero image
 const heroImg = document.getElementById('heroImg');
 if (heroImg) {

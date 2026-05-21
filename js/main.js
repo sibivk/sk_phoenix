@@ -79,15 +79,32 @@ splashEnter.addEventListener('click', () => {
   setTimeout(() => splash.remove(), 1000);
 });
 
-// Touch expand for capability and focus items (mobile)
-let touchMoved = false;
-document.querySelectorAll('.capability-item, .focus-item').forEach(item => {
-  item.addEventListener('touchstart', () => { touchMoved = false; }, { passive: true });
-  item.addEventListener('touchmove',  () => { touchMoved = true;  }, { passive: true });
-  item.addEventListener('touchend', () => {
-    if (!touchMoved) item.classList.toggle('expanded');
+// Mobile: scroll-driven auto-expand
+// Items open when their center enters the middle 40% of the viewport,
+// close when they drift outside it.
+const expandItems = document.querySelectorAll('.capability-item, .focus-item');
+const isTouch     = window.matchMedia('(hover: none) and (pointer: coarse)');
+
+function updateScrollExpand() {
+  if (!isTouch.matches) return;
+  const vh = window.innerHeight;
+  expandItems.forEach(item => {
+    const rect = item.getBoundingClientRect();
+    const mid  = rect.top + rect.height * 0.5;
+    item.classList.toggle('expanded', mid > vh * 0.30 && mid < vh * 0.70);
   });
-});
+}
+
+let expandRaf = false;
+function scheduleExpand() {
+  if (expandRaf) return;
+  expandRaf = true;
+  requestAnimationFrame(() => { updateScrollExpand(); expandRaf = false; });
+}
+
+window.addEventListener('scroll', scheduleExpand, { passive: true });
+window.addEventListener('resize', scheduleExpand, { passive: true });
+updateScrollExpand();
 
 // Scroll-driven word illumination on philosophy quote
 const quoteWords = document.querySelectorAll('.philosophy-quote .word');

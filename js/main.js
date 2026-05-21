@@ -50,6 +50,40 @@ const observer = new IntersectionObserver(entries => {
 
 reveals.forEach(el => observer.observe(el));
 
+// Background music
+const audio   = document.getElementById('bgAudio');
+const musicBtn = document.getElementById('musicBtn');
+const iconPlay  = musicBtn.querySelector('.music-icon-play');
+const iconPause = musicBtn.querySelector('.music-icon-pause');
+
+audio.volume = 0.4;
+
+function setPlaying(playing) {
+  iconPlay.style.display  = playing ? 'none'  : '';
+  iconPause.style.display = playing ? ''      : 'none';
+  musicBtn.classList.toggle('playing', playing);
+}
+
+musicBtn.addEventListener('click', () => {
+  if (audio.paused) {
+    audio.play().then(() => setPlaying(true)).catch(() => {});
+  } else {
+    audio.pause();
+    setPlaying(false);
+  }
+});
+
+// Try autoplay on first user interaction with the page
+let autoplayAttempted = false;
+function tryAutoplay() {
+  if (autoplayAttempted) return;
+  autoplayAttempted = true;
+  audio.play().then(() => setPlaying(true)).catch(() => {});
+}
+document.addEventListener('click', tryAutoplay, { once: true });
+document.addEventListener('keydown', tryAutoplay, { once: true });
+document.addEventListener('scroll', tryAutoplay, { once: true, passive: true });
+
 // Subtle parallax on hero image
 const heroImg = document.getElementById('heroImg');
 if (heroImg) {

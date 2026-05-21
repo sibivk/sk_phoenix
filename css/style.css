@@ -717,6 +717,12 @@ body:has(button:hover) .cursor {
   width: auto;
   display: block;
   opacity: 0.7;
+  animation: splashLogoPulse 2.6s ease-in-out 1.2s infinite;
+}
+
+@keyframes splashLogoPulse {
+  0%, 100% { opacity: 0.5;  transform: scale(1);    }
+  50%       { opacity: 1;    transform: scale(1.08); }
 }
 
 .splash-line {

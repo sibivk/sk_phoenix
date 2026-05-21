@@ -96,7 +96,7 @@ body:has(button:hover) .cursor {
 }
 
 .nav-logo-img {
-  height: 28px;
+  height: 56px;
   width: auto;
   display: block;
   opacity: 0.85;
@@ -105,6 +105,20 @@ body:has(button:hover) .cursor {
 
 .nav-logo:hover .nav-logo-img {
   opacity: 1;
+}
+
+.nav-logo-text {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.8);
+  transition: color 0.3s ease;
+}
+
+.nav-logo:hover .nav-logo-text {
+  color: var(--white);
 }
 
 .nav-links {

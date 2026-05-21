@@ -161,7 +161,7 @@ body:has(button:hover) .cursor {
   height: 100%;
   object-fit: cover;
   object-position: center 15%;
-  filter: contrast(1.05) brightness(0.95);
+  filter: blur(2.5px) contrast(1.02) brightness(0.92);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 15%, black 40%),
                       linear-gradient(to bottom, black 60%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 15%, black 40%);
@@ -291,6 +291,66 @@ body:has(button:hover) .cursor {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ============================
+   MUSIC BUTTON
+   ============================ */
+.music-btn {
+  position: fixed;
+  bottom: 2.2rem;
+  left: 4vw;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 2rem;
+  padding: 0.5rem 0.9rem 0.5rem 0.75rem;
+  color: rgba(255,255,255,0.45);
+  cursor: none;
+  transition: border-color 0.3s ease, color 0.3s ease, background 0.3s ease;
+  outline: none;
+}
+
+.music-btn:hover {
+  border-color: rgba(255,255,255,0.45);
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.04);
+}
+
+.music-btn.playing {
+  border-color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.7);
+}
+
+.music-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.music-label {
+  font-size: 0.55rem;
+  font-weight: 400;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+/* Subtle pulse ring when playing */
+.music-btn.playing::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 2rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  animation: musicPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes musicPulse {
+  0%, 100% { opacity: 0; transform: scale(1); }
+  50%       { opacity: 1; transform: scale(1.03); }
 }
 
 /* ============================

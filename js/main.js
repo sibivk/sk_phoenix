@@ -131,6 +131,17 @@ window.addEventListener('scroll', illuminateWords, { passive: true });
 window.addEventListener('resize', illuminateWords, { passive: true });
 illuminateWords();
 
+// Philosophy word glow — fires once when section enters view
+const philoSection = document.querySelector('.section-philosophy');
+if (philoSection) {
+  new IntersectionObserver((entries, obs) => {
+    if (entries[0].isIntersecting) {
+      document.querySelectorAll('.glow-word').forEach(el => el.classList.add('glow-active'));
+      obs.disconnect();
+    }
+  }, { threshold: 0.25 }).observe(philoSection);
+}
+
 // Subtle parallax on hero image
 const heroImg = document.getElementById('heroImg');
 if (heroImg) {

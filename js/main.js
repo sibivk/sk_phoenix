@@ -69,6 +69,15 @@ musicBtn.addEventListener('click', () => {
   }
 });
 
+// Pause music when tab loses focus, resume when it returns
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    audio.pause();
+  } else if (musicBtn.classList.contains('playing')) {
+    audio.play().catch(() => {});
+  }
+});
+
 // Splash screen — dismisses on Enter click and starts audio
 const splash = document.getElementById('splash');
 const splashEnter = document.getElementById('splashEnter');

@@ -70,8 +70,7 @@ function runInkDrop() {
 
   // ── Timing after settle ──────────────────────────────────────────────
   const T_SHRINK = 500;       // ms to shrink ball → period
-  const T_HOLD   = 2200;      // ms to hold as period
-  const T_FADE   = 900;       // ms to fade out
+  const T_HOLD   = 2200;      // ms to hold (then period stays permanently)
 
   // ── Helpers ──────────────────────────────────────────────────────────
   function easeOut(t)   { return 1 - Math.pow(1 - t, 3); }
@@ -130,34 +129,22 @@ function runInkDrop() {
     } else {
       // ── Settle → period ────────────────────────────────────────────
       settleTimer += dt * 1000;
-      const totalAnim = T_SHRINK + T_HOLD + T_FADE;
-
-      if (settleTimer >= totalAnim) {
-        cvs.remove();
-        return;
-      }
 
       if (settleTimer < T_SHRINK) {
         // Shrink ball radius down to period size, drop to sit on floor
         const p     = easeInOut(settleTimer / T_SHRINK);
-        const r     = BALL_R   + (PERIOD_R   - BALL_R)            * p;
+        const r     = BALL_R + (PERIOD_R - BALL_R) * p;
         const yBase = floorY - BALL_R;
         const yEnd  = floorY - PERIOD_R;
         const y     = yBase + (yEnd - yBase) * p;
         drawBall(posX, y, r, 0, 1);
-
-      } else if (settleTimer < T_SHRINK + T_HOLD) {
-        // Hold as period
-        drawBall(posX, floorY - PERIOD_R, PERIOD_R, 0, 1);
+        requestAnimationFrame(frame);
 
       } else {
-        // Fade out
-        const fp    = (settleTimer - T_SHRINK - T_HOLD) / T_FADE;
-        const alpha = 1 - easeIn(fp);
-        drawBall(posX, floorY - PERIOD_R, PERIOD_R, 0, alpha);
+        // Period is fully formed — draw it once and stop the loop permanently
+        drawBall(posX, floorY - PERIOD_R, PERIOD_R, 0, 1);
+        // No further requestAnimationFrame — canvas stays with the period dot
       }
-
-      requestAnimationFrame(frame);
     }
   }
 

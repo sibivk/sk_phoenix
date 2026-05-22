@@ -30,6 +30,10 @@ body {
   cursor: none;
 }
 
+body.splash-active {
+  overflow: hidden;
+}
+
 /* ============================
    CUSTOM CURSOR
    ============================ */

@@ -1,151 +1,142 @@
-// Ink Drop Animation
-// A droplet falls, impacts the hero name, scatters into chaos,
-// then snaps into a perfect grid — chaos resolved into structure.
+// Ink Ball Animation
+// A ball drops with gravity, bounces on the KAITHARATH baseline with
+// decreasing energy, and settles as a period dot at the end of the word.
 
 function runInkDrop() {
-  const hero     = document.getElementById('hero');
-  const heroName = document.querySelector('.hero-name');
-  if (!hero || !heroName) return;
+  const hero = document.getElementById('hero');
+  if (!hero) return;
 
-  // Canvas setup (DPR-aware for crisp rendering)
-  const dpr    = Math.min(window.devicePixelRatio || 1, 2);
-  const W      = hero.offsetWidth;
-  const H      = hero.offsetHeight;
-  const canvas = document.createElement('canvas');
-  canvas.width  = W * dpr;
-  canvas.height = H * dpr;
-  canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:10;';
-  hero.appendChild(canvas);
+  // Target the KAITHARATH line (second .hero-name-line)
+  const lines = hero.querySelectorAll('.hero-name-line');
+  const kLine = lines[lines.length - 1];
+  if (!kLine) return;
 
-  const ctx = canvas.getContext('2d');
+  const heroRect = hero.getBoundingClientRect();
+  const kRect    = kLine.getBoundingClientRect();
+
+  // The "floor" is the bottom of the KAITHARATH text (Bebas Neue is all-caps
+  // so the bounding-box bottom is effectively the baseline)
+  const floorY  = kRect.bottom - heroRect.top;
+  const targetX = kRect.right  - heroRect.left + 10;  // just after the H
+
+  // Canvas
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W   = hero.offsetWidth;
+  const H   = hero.offsetHeight;
+  const cvs = document.createElement('canvas');
+  cvs.width  = W * dpr;
+  cvs.height = H * dpr;
+  cvs.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:10;';
+  hero.appendChild(cvs);
+  const ctx = cvs.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  // Impact point — left-centre of the hero name
-  const heroRect = hero.getBoundingClientRect();
-  const nameRect = heroName.getBoundingClientRect();
-  const impactX  = nameRect.left - heroRect.left + nameRect.width  * 0.30;
-  const impactY  = nameRect.top  - heroRect.top  + nameRect.height * 0.55;
+  // ── Physics constants ────────────────────────────────────────────────
+  const GRAVITY     = 1500;   // px/s²
+  const RESTITUTION = 0.58;   // energy kept per bounce
+  const BALL_R      = 13;     // ball radius while bouncing
+  const PERIOD_R    = 7;      // final period radius
+  const SETTLE_VEL  = 55;     // px/s — bounce velocity below this = settle
 
-  // Grid of squares that will form over the name bounding box
-  const CELL = 6, GAP = 2, STEP = CELL + GAP;
-  const gx0  = nameRect.left - heroRect.left - STEP;
-  const gy0  = nameRect.top  - heroRect.top  - STEP;
-  const gw   = nameRect.width  + STEP * 2;
-  const gh   = nameRect.height + STEP * 2;
+  // ── Ball state ───────────────────────────────────────────────────────
+  let posX   = targetX;
+  let posY   = -BALL_R;       // start above canvas
+  let velY   = 0;
+  let squish = 0;             // +1 = squashed, decays to 0
 
-  const squares = [];
-  for (let x = gx0; x < gx0 + gw; x += STEP) {
-    for (let y = gy0; y < gy0 + gh; y += STEP) {
-      const angle = Math.atan2(y - impactY, x - impactX) + (Math.random() - 0.5) * 0.8;
-      const dist  = 70 + Math.random() * 160;
-      squares.push({
-        gx: x, gy: y,                                  // final grid position
-        sx: impactX + Math.cos(angle) * dist,           // scatter position
-        sy: impactY + Math.sin(angle) * dist,
-      });
-    }
+  let settled     = false;
+  let settleTimer = 0;        // ms elapsed since settling
+
+  // ── Timing after settle ──────────────────────────────────────────────
+  const T_SHRINK = 500;       // ms to shrink ball → period
+  const T_HOLD   = 2200;      // ms to hold as period
+  const T_FADE   = 900;       // ms to fade out
+
+  // ── Helpers ──────────────────────────────────────────────────────────
+  function easeOut(t)   { return 1 - Math.pow(1 - t, 3); }
+  function easeInOut(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+  function easeIn(t)    { return t * t * t; }
+  function clamp(v,a,b) { return Math.max(a, Math.min(b, v)); }
+
+  function drawBall(x, y, r, sq, alpha) {
+    if (alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = clamp(alpha, 0, 1);
+    ctx.translate(x, y);
+    // squish: wider + shorter on impact
+    ctx.scale(1 + sq * 0.45, 1 - sq * 0.30);
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.fill();
+    ctx.restore();
   }
 
-  // Timing (ms)
-  const T_DROP_HIT    =  880;   // drop reaches name
-  const T_SCATTER_END = 1600;   // squares fully scattered
-  const T_GRID_END    = 2700;   // squares locked to grid
-  const T_HOLD_END    = 3500;   // hold complete
-  const T_FADE_END    = 4800;   // fully faded
-
-  // Easing helpers
-  const eIn    = t => t * t * t;
-  const eOut   = t => 1 - Math.pow(1 - t, 3);
-  const eInOut = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
-  const lerp   = (a, b, t) => a + (b - a) * t;
-  const clamp  = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-  const tr     = (ms, s, e) => clamp((ms - s) / (e - s), 0, 1);
-
-  let t0 = null;
+  let prevTs = null;
 
   function frame(ts) {
-    if (!t0) t0 = ts;
-    const ms = ts - t0;
+    if (!prevTs) prevTs = ts;
+    const dt = clamp((ts - prevTs) / 1000, 0, 0.05);  // seconds, capped
+    prevTs = ts;
+
     ctx.clearRect(0, 0, W, H);
 
-    // Global fade-out in final phase
-    ctx.globalAlpha = ms > T_HOLD_END
-      ? 1 - eIn(tr(ms, T_HOLD_END, T_FADE_END))
-      : 1;
+    if (!settled) {
+      // ── Gravity & bounce ───────────────────────────────────────────
+      velY  += GRAVITY * dt;
+      posY  += velY   * dt;
+      squish = squish * Math.exp(-dt * 14);   // squish decays quickly
 
-    // ── Phase 1: drop falling ──────────────────────────────────────────
-    if (ms < T_DROP_HIT) {
-      const p  = eIn(tr(ms, 0, T_DROP_HIT));
-      const dy = lerp(-20, impactY, p);
-      const tailLen = Math.max(0, 45 * p);
+      const contact = floorY - BALL_R;
 
-      // Teardrop tail
-      if (tailLen > 2) {
-        const grad = ctx.createLinearGradient(impactX, dy - tailLen, impactX, dy);
-        grad.addColorStop(0, 'rgba(255,255,255,0)');
-        grad.addColorStop(1, 'rgba(255,255,255,0.7)');
-        ctx.beginPath();
-        ctx.moveTo(impactX - 3.5, dy - tailLen);
-        ctx.quadraticCurveTo(impactX - 5, dy - tailLen * 0.4, impactX - 6, dy);
-        ctx.lineTo(impactX + 6, dy);
-        ctx.quadraticCurveTo(impactX + 5, dy - tailLen * 0.4, impactX + 3.5, dy - tailLen);
-        ctx.fillStyle = grad;
-        ctx.fill();
+      if (posY >= contact) {
+        posY   = contact;
+        const speed = Math.abs(velY);
+        velY   = -speed * RESTITUTION;
+        squish = clamp(speed / 900, 0.1, 0.9);
+
+        if (speed < SETTLE_VEL) {
+          settled = true;
+          posY    = contact;
+          velY    = 0;
+          squish  = 0;
+        }
       }
 
-      // Drop sphere
-      ctx.beginPath();
-      ctx.arc(impactX, dy, 10, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.92)';
-      ctx.fill();
-
-    // ── Phase 2: impact ripple + scatter outward ───────────────────────
-    } else if (ms < T_SCATTER_END) {
-      // Expanding ripple rings
-      const rp = tr(ms, T_DROP_HIT, T_DROP_HIT + 380);
-      if (rp < 1) {
-        [1, 0.55].forEach((scale, i) => {
-          const rr = rp * 90 * scale;
-          const ra = (1 - rp) * (i === 0 ? 0.55 : 0.25);
-          ctx.beginPath();
-          ctx.arc(impactX, impactY, rr, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(255,255,255,${ra})`;
-          ctx.lineWidth = i === 0 ? 2 : 1;
-          ctx.stroke();
-        });
-      }
-
-      // Scatter squares
-      const sp = eOut(tr(ms, T_DROP_HIT, T_SCATTER_END));
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      squares.forEach(sq => {
-        ctx.fillRect(
-          lerp(impactX, sq.sx, sp) - CELL / 2,
-          lerp(impactY, sq.sy, sp) - CELL / 2,
-          CELL, CELL
-        );
-      });
-
-    // ── Phase 3: snap to perfect grid ─────────────────────────────────
-    } else if (ms < T_GRID_END) {
-      const gp = eInOut(tr(ms, T_SCATTER_END, T_GRID_END));
-      squares.forEach(sq => {
-        const progress = Math.min(1, gp + (Math.random() < 0.01 ? 0 : 0)); // uniform snap
-        const alpha = lerp(0.55, 0.72, gp);
-        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-        ctx.fillRect(lerp(sq.sx, sq.gx, gp), lerp(sq.sy, sq.gy, gp), CELL, CELL);
-      });
-
-    // ── Phase 4: hold — perfect grid over the name ────────────────────
-    } else {
-      ctx.fillStyle = 'rgba(255,255,255,0.72)';
-      squares.forEach(sq => ctx.fillRect(sq.gx, sq.gy, CELL, CELL));
-    }
-
-    if (ms < T_FADE_END) {
+      drawBall(posX, posY, BALL_R, squish, 1);
       requestAnimationFrame(frame);
+
     } else {
-      canvas.remove();
+      // ── Settle → period ────────────────────────────────────────────
+      settleTimer += dt * 1000;
+      const totalAnim = T_SHRINK + T_HOLD + T_FADE;
+
+      if (settleTimer >= totalAnim) {
+        cvs.remove();
+        return;
+      }
+
+      if (settleTimer < T_SHRINK) {
+        // Shrink ball radius down to period size, drop to sit on floor
+        const p     = easeInOut(settleTimer / T_SHRINK);
+        const r     = BALL_R   + (PERIOD_R   - BALL_R)            * p;
+        const yBase = floorY - BALL_R;
+        const yEnd  = floorY - PERIOD_R;
+        const y     = yBase + (yEnd - yBase) * p;
+        drawBall(posX, y, r, 0, 1);
+
+      } else if (settleTimer < T_SHRINK + T_HOLD) {
+        // Hold as period
+        drawBall(posX, floorY - PERIOD_R, PERIOD_R, 0, 1);
+
+      } else {
+        // Fade out
+        const fp    = (settleTimer - T_SHRINK - T_HOLD) / T_FADE;
+        const alpha = 1 - easeIn(fp);
+        drawBall(posX, floorY - PERIOD_R, PERIOD_R, 0, alpha);
+      }
+
+      requestAnimationFrame(frame);
     }
   }
 

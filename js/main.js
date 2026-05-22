@@ -78,13 +78,17 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// Splash screen — dismisses on Enter click and starts audio
+// Splash screen — lock scroll while visible, release on Enter
 const splash = document.getElementById('splash');
 const splashEnter = document.getElementById('splashEnter');
+
+document.body.classList.add('splash-active');
 
 splashEnter.addEventListener('click', () => {
   audio.play().then(() => setPlaying(true)).catch(() => {});
   splash.classList.add('hidden');
+  document.body.classList.remove('splash-active');
+  window.scrollTo(0, 0);
   setTimeout(() => splash.remove(), 1000);
 });
 

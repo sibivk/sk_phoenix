@@ -185,7 +185,7 @@ body:has(button:hover) .cursor {
   height: 100%;
   object-fit: cover;
   object-position: center 15%;
-  filter: contrast(1.05);
+  filter: blur(2.5px) contrast(1.05);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 15%, black 40%),
                       linear-gradient(to bottom, black 60%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 15%, black 40%);

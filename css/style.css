@@ -322,6 +322,37 @@ body:has(button:hover) .cursor {
 }
 
 /* ============================
+   LETTER HALO GLOW (S · V · K)
+   Triggered by inkdrop.js after the period dot settles.
+   Three letters pulse in a cascading wave — each offset by 1/3 of the cycle.
+   ============================ */
+.glow-letter {
+  display: inline;
+}
+
+@keyframes letterHalo {
+  0%, 100% {
+    text-shadow: none;
+  }
+  40%, 60% {
+    text-shadow:
+      0 0 12px rgba(255,255,255,0.9),
+      0 0 28px rgba(255,255,255,0.55),
+      0 0 55px rgba(255,255,255,0.28),
+      0 0 100px rgba(255,255,255,0.12);
+  }
+}
+
+.glow-letter.glow-active {
+  animation: letterHalo 3.6s ease-in-out infinite;
+}
+
+/* Cascade: S → V → K, each 1.2 s apart (= ⅓ of one cycle) */
+.glow-letter.gl-1.glow-active { animation-delay: 0s;   }
+.glow-letter.gl-2.glow-active { animation-delay: 1.2s; }
+.glow-letter.gl-3.glow-active { animation-delay: 2.4s; }
+
+/* ============================
    MUSIC BUTTON
    ============================ */
 .music-btn {

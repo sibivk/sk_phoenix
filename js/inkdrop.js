@@ -70,7 +70,6 @@ function runInkDrop() {
 
   // ── Timing after settle ──────────────────────────────────────────────
   const T_SHRINK = 500;       // ms to shrink ball → period
-  const T_HOLD   = 2200;      // ms to hold (then period stays permanently)
 
   // ── Helpers ──────────────────────────────────────────────────────────
   function easeOut(t)   { return 1 - Math.pow(1 - t, 3); }
@@ -143,6 +142,8 @@ function runInkDrop() {
       } else {
         // Period is fully formed — draw it once and stop the loop permanently
         drawBall(posX, floorY - PERIOD_R, PERIOD_R, 0, 1);
+        // Cascade the halo glow on S, V, K — CSS handles the animation
+        document.querySelectorAll('.glow-letter').forEach(el => el.classList.add('glow-active'));
         // No further requestAnimationFrame — canvas stays with the period dot
       }
     }

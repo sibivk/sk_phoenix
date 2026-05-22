@@ -12,12 +12,33 @@ function runInkDrop() {
   if (!kLine) return;
 
   const heroRect = hero.getBoundingClientRect();
-  const kRect    = kLine.getBoundingClientRect();
 
-  // The "floor" is the bottom of the KAITHARATH text (Bebas Neue is all-caps
-  // so the bounding-box bottom is effectively the baseline)
-  const floorY  = kRect.bottom - heroRect.top;
-  const targetX = kRect.right  - heroRect.left + 10;  // just after the H
+  // ── Precise visual measurement of KAITHARATH ─────────────────────────
+  //
+  // Problem 1 (desktop): .hero-name-line is display:block with line-height:0.88.
+  // getBoundingClientRect().bottom includes Bebas Neue's descender metric gap
+  // (~20% of em), placing the "floor" ~80-100px below the actual letter bottoms.
+  // Fix: insert a zero-height inline-block with vertical-align:baseline — its
+  // bottom edge lands exactly on the text baseline (= visual bottom of all-caps).
+  //
+  // Problem 2 (mobile): the block element's right edge is the full container
+  // width, not the glyph edge. Fix: use Range.getBoundingClientRect() which
+  // returns the actual ink-column bounding box of the text.
+
+  // 1. Locate baseline (visual bottom of KAITHARATH letters)
+  const blMark = document.createElement('span');
+  blMark.style.cssText = 'display:inline-block;width:0;height:0;overflow:hidden;vertical-align:baseline;';
+  kLine.appendChild(blMark);
+  const baselineY = blMark.getBoundingClientRect().bottom;
+  kLine.removeChild(blMark);
+
+  // 2. Locate visual right edge of "H" (text width, not block width)
+  const range = document.createRange();
+  range.selectNodeContents(kLine);
+  const textRect = range.getBoundingClientRect();
+
+  const floorY  = baselineY        - heroRect.top;
+  const targetX = textRect.right   - heroRect.left + 8;  // 8px gap after the H
 
   // Canvas
   const dpr = Math.min(window.devicePixelRatio || 1, 2);

@@ -352,6 +352,39 @@ body:has(button:hover) .cursor {
 .glow-letter.gl-2.glow-active { animation-delay: 1.2s; }
 .glow-letter.gl-3.glow-active { animation-delay: 2.4s; }
 
+/* ── Section item glow (Capabilities & Focus first letters) ──────────
+   Triggered automatically when the parent item gains .visible from
+   the IntersectionObserver in main.js. Uses a tighter shadow spread
+   suited to body-text scale (~1rem).                                  */
+
+@keyframes letterHaloSm {
+  0%, 100% { text-shadow: none; }
+  40%, 60% {
+    text-shadow:
+      0 0 8px  rgba(255,255,255,0.95),
+      0 0 18px rgba(255,255,255,0.55),
+      0 0 35px rgba(255,255,255,0.25),
+      0 0 60px rgba(255,255,255,0.10);
+  }
+}
+
+.capability-item.visible .glow-letter,
+.focus-item.visible .glow-letter {
+  animation-name:            letterHaloSm;
+  animation-duration:        3.6s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-delay:           var(--glow-delay, 0s);
+}
+
+/* Per-item stagger — gd-1…gd-6 repeat for both sections             */
+.glow-letter.gd-1 { --glow-delay: 0.0s; }
+.glow-letter.gd-2 { --glow-delay: 0.6s; }
+.glow-letter.gd-3 { --glow-delay: 1.2s; }
+.glow-letter.gd-4 { --glow-delay: 1.8s; }
+.glow-letter.gd-5 { --glow-delay: 2.4s; }
+.glow-letter.gd-6 { --glow-delay: 3.0s; }
+
 /* ============================
    MUSIC BUTTON
    ============================ */

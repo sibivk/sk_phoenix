@@ -385,6 +385,30 @@ body:has(button:hover) .cursor {
 .glow-letter.gd-5 { --glow-delay: 2.4s; }
 .glow-letter.gd-6 { --glow-delay: 3.0s; }
 
+/* ── Philosophy quote word glow (clarity → constraints → deterministic)
+   Triggered by IntersectionObserver once .section-philosophy enters
+   view. Uses display-font shadow scale (between hero and item sizes). */
+
+@keyframes wordHalo {
+  0%, 100% { text-shadow: none; }
+  40%, 60% {
+    text-shadow:
+      0 0 12px rgba(255,255,255,0.90),
+      0 0 25px rgba(255,255,255,0.55),
+      0 0 50px rgba(255,255,255,0.28),
+      0 0 90px rgba(255,255,255,0.12);
+  }
+}
+
+.glow-word.glow-active {
+  animation: wordHalo 3.6s ease-in-out infinite;
+}
+
+/* Cascade: clarity → constraints → deterministic (1.2 s apart = ⅓ cycle) */
+.glow-word.gw-1.glow-active { animation-delay: 0s;   }
+.glow-word.gw-2.glow-active { animation-delay: 1.2s; }
+.glow-word.gw-3.glow-active { animation-delay: 2.4s; }
+
 /* ============================
    MUSIC BUTTON
    ============================ */

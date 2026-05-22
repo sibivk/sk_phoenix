@@ -90,6 +90,8 @@ splashEnter.addEventListener('click', () => {
   document.body.classList.remove('splash-active');
   window.scrollTo(0, 0);
   setTimeout(() => splash.remove(), 1000);
+  // Ink drop fires after hero text has fully animated in
+  setTimeout(runInkDrop, 1800);
 });
 
 // Mobile: tap to expand/collapse — accordion (only one open at a time)

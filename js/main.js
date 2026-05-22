@@ -92,13 +92,18 @@ splashEnter.addEventListener('click', () => {
   setTimeout(() => splash.remove(), 1000);
 });
 
-// Mobile: tap to expand/collapse
+// Mobile: tap to expand/collapse — accordion (only one open at a time)
+const allExpandItems = Array.from(document.querySelectorAll('.capability-item, .focus-item'));
 let touchMoved = false;
-document.querySelectorAll('.capability-item, .focus-item').forEach(item => {
+
+allExpandItems.forEach(item => {
   item.addEventListener('touchstart', () => { touchMoved = false; }, { passive: true });
   item.addEventListener('touchmove',  () => { touchMoved = true;  }, { passive: true });
   item.addEventListener('touchend', () => {
-    if (!touchMoved) item.classList.toggle('expanded');
+    if (touchMoved) return;
+    const isOpen = item.classList.contains('expanded');
+    allExpandItems.forEach(i => i.classList.remove('expanded'));
+    if (!isOpen) item.classList.add('expanded');
   });
 });
 

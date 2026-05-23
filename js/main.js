@@ -227,3 +227,19 @@ const glowObserver = new IntersectionObserver(entries => {
   document.querySelector('.section-focus'),
   document.querySelector('.section-philosophy'),
 ].filter(Boolean).forEach(el => glowObserver.observe(el));
+
+// GPU power-state ping — fires once per second to keep the GPU driver
+// from entering deep DVFS power-save (which causes 5-8 s wake-up lag).
+// A 60fps keepalive element caused thermal throttling after ~2 min; a
+// 1fps ping prevents deep sleep without building sustained heat.
+// Writes a sub-pixel (0.0002 px) alternating offset — genuinely different
+// each call so the browser doesn't optimise the write away.
+// Skipped when the tab is hidden so there is zero background drain.
+let _gpuPingTick = 0;
+setInterval(() => {
+  if (document.hidden) return;
+  _gpuPingTick ^= 1;
+  const micro = _gpuPingTick * 0.0002; // 0 or 0.0002 px — physically undetectable
+  cursorDot.style.transform =
+    `translate(calc(${mouseX + micro}px - 50%), calc(${mouseY}px - 50%))`;
+}, 1000);

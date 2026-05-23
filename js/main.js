@@ -163,3 +163,18 @@ if (heroImg) {
     }
   }, { passive: true });
 }
+
+// Pause glow animations when sections scroll out of view — prevents
+// off-screen GPU work that causes intermittent stutter
+const glowObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    entry.target.classList.toggle('glow-paused', !entry.isIntersecting);
+  });
+}, { threshold: 0 });
+
+[
+  document.getElementById('hero'),
+  document.querySelector('.section-capabilities'),
+  document.querySelector('.section-focus'),
+  document.querySelector('.section-philosophy'),
+].filter(Boolean).forEach(el => glowObserver.observe(el));

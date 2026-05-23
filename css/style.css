@@ -836,10 +836,11 @@ body:has(button:hover) .cursor {
    Both pause all animations immediately to free CPU/GPU.
    ============================ */
 
-/* Tab hidden — pause everything */
+/* Tab hidden — pause everything including the GPU keepalive */
 .tab-hidden .glow-letter,
 .tab-hidden .glow-word,
-.tab-hidden .scroll-line::after {
+.tab-hidden .scroll-line::after,
+.tab-hidden .gpu-keepalive {
   animation-play-state: paused;
 }
 
@@ -851,6 +852,33 @@ body:has(button:hover) .cursor {
 .section-focus.glow-paused .glow-letter,
 .section-philosophy.glow-paused .glow-word {
   animation-play-state: paused !important;
+}
+
+/* ============================
+   GPU COMPOSITOR KEEPALIVE
+   An invisible 1 × 1 px element that runs a trivial transform animation
+   continuously. Without ongoing compositor activity the GPU driver enters
+   a power-save state (DVFS clock-down) and takes 5-8 s to ramp back up
+   on the next user interaction — the "idle then slow" symptom.
+   Cost: one GPU tile (~64 × 64 px, transparent), near-zero CPU overhead.
+   Paused when tab is hidden so power is not wasted in the background.
+   ============================ */
+.gpu-keepalive {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  will-change: transform;
+  animation: gpuKeepalive 2s linear infinite;
+}
+
+@keyframes gpuKeepalive {
+  from { transform: translateX(0);   }
+  to   { transform: translateX(1px); }
 }
 
 /* Respect user's reduced-motion preference */

@@ -843,6 +843,16 @@ body:has(button:hover) .cursor {
   animation-play-state: paused;
 }
 
+/* Nav-link smooth-scroll freeze — pause all glow animations while the
+   smooth-scroll journey runs (2 s window set by JS).  Prevents rapid
+   section-boundary crossing from cycling 12-18 CPU filter-paint animations
+   on/off, which leaves a ~20 s main-thread backlog after navigation. */
+body.nav-scrolling .glow-letter,
+body.nav-scrolling .glow-word,
+body.nav-scrolling .scroll-line::after {
+  animation-play-state: paused;
+}
+
 /* Section out of view — pause that section's glows only.
    !important needed to beat the .capability-item.visible specificity. */
 #hero.glow-paused .glow-letter,

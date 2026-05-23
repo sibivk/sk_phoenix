@@ -214,12 +214,15 @@ if (heroImg) {
 }
 
 // Pause glow animations when sections scroll out of view — prevents
-// off-screen GPU work that causes intermittent stutter
+// off-screen GPU work that causes intermittent stutter.
+// threshold:0.05 — section must be 5 % visible before animations activate.
+// At threshold:0 a section 1 px into the viewport would start all its filter
+// animations, causing rapid on/off cycling during smooth-scroll navigation.
 const glowObserver = new IntersectionObserver(entries => {
   entries.forEach(entry => {
     entry.target.classList.toggle('glow-paused', !entry.isIntersecting);
   });
-}, { threshold: 0 });
+}, { threshold: 0.05 });
 
 [
   document.getElementById('hero'),
@@ -227,6 +230,24 @@ const glowObserver = new IntersectionObserver(entries => {
   document.querySelector('.section-focus'),
   document.querySelector('.section-philosophy'),
 ].filter(Boolean).forEach(el => glowObserver.observe(el));
+
+// Nav-click animation freeze — pause all glow animations for 2 s after any
+// nav link click.  When scroll-behavior:smooth scrolls through multiple
+// sections rapidly, glow animations toggle on/off at every boundary crossing.
+// CPU filter-paint cycling + GPU layer churn from 12-18 simultaneous filter
+// animations leaves a ~20 s main-thread backlog once scrolling stops.
+// Freezing for 2 s (long enough to cover the full smooth-scroll journey)
+// eliminates that churn entirely.
+let _navScrollTimer = null;
+document.querySelectorAll('.nav-links a, .footer-nav a').forEach(link => {
+  link.addEventListener('click', () => {
+    document.body.classList.add('nav-scrolling');
+    clearTimeout(_navScrollTimer);
+    _navScrollTimer = setTimeout(() => {
+      document.body.classList.remove('nav-scrolling');
+    }, 2000);
+  });
+});
 
 // GPU power-state ping — fires once per second to keep the GPU driver
 // from entering deep DVFS power-save (which causes 5-8 s wake-up lag).

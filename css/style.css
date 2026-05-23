@@ -39,27 +39,30 @@ body.splash-active {
    ============================ */
 .cursor {
   position: fixed;
+  top: 0;
+  left: 0;
   width: 32px;
   height: 32px;
   border: 1px solid rgba(255,255,255,0.5);
   border-radius: 50%;
   pointer-events: none;
   z-index: 9999;
-  transform: translate(-50%, -50%);
-  transition: transform 0.08s ease, width 0.2s ease, height 0.2s ease, border-color 0.2s ease;
+  /* transform is set entirely by JS — no CSS centering needed */
+  transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease;
   will-change: transform;
 }
 
 .cursor-dot {
   position: fixed;
+  top: 0;
+  left: 0;
   width: 4px;
   height: 4px;
   background: var(--white);
   border-radius: 50%;
   pointer-events: none;
   z-index: 9999;
-  transform: translate(-50%, -50%);
-  transition: transform 0.04s ease;
+  /* transform is set entirely by JS */
   will-change: transform;
 }
 
@@ -301,17 +304,20 @@ body:has(button:hover) .cursor {
 .scroll-line::after {
   content: '';
   position: absolute;
-  top: -100%;
+  top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background: rgba(255,255,255,0.6);
+  /* Use transform (GPU composited) instead of top (layout/paint) */
+  transform: translateY(-100%);
   animation: scrollPulse 2.2s ease-in-out 1.5s infinite;
+  will-change: transform;
 }
 
 @keyframes scrollPulse {
-  0%   { top: -100%; }
-  100% { top: 100%; }
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
 }
 
 @keyframes fadeUp {
@@ -331,20 +337,19 @@ body:has(button:hover) .cursor {
 }
 
 @keyframes letterHalo {
-  0%, 100% {
-    text-shadow: none;
-  }
+  0%, 100% { filter: none; }
   40%, 60% {
-    text-shadow:
-      0 0 12px rgba(255,255,255,0.9),
-      0 0 28px rgba(255,255,255,0.55),
-      0 0 55px rgba(255,255,255,0.28),
-      0 0 100px rgba(255,255,255,0.12);
+    filter:
+      drop-shadow(0 0 8px  rgba(255,255,255,0.9))
+      drop-shadow(0 0 20px rgba(255,255,255,0.55))
+      drop-shadow(0 0 40px rgba(255,255,255,0.28))
+      drop-shadow(0 0 70px rgba(255,255,255,0.12));
   }
 }
 
 .glow-letter.glow-active {
   animation: letterHalo 3.6s ease-in-out infinite;
+  will-change: filter;
 }
 
 /* Cascade: S → V → K, each 1.2 s apart (= ⅓ of one cycle) */
@@ -358,13 +363,13 @@ body:has(button:hover) .cursor {
    suited to body-text scale (~1rem).                                  */
 
 @keyframes letterHaloSm {
-  0%, 100% { text-shadow: none; }
+  0%, 100% { filter: none; }
   40%, 60% {
-    text-shadow:
-      0 0 8px  rgba(255,255,255,0.95),
-      0 0 18px rgba(255,255,255,0.55),
-      0 0 35px rgba(255,255,255,0.25),
-      0 0 60px rgba(255,255,255,0.10);
+    filter:
+      drop-shadow(0 0 5px  rgba(255,255,255,0.95))
+      drop-shadow(0 0 12px rgba(255,255,255,0.55))
+      drop-shadow(0 0 25px rgba(255,255,255,0.25))
+      drop-shadow(0 0 45px rgba(255,255,255,0.10));
   }
 }
 
@@ -375,6 +380,7 @@ body:has(button:hover) .cursor {
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
   animation-delay:           var(--glow-delay, 0s);
+  will-change:               filter;
 }
 
 /* Per-item stagger — gd-1…gd-6 repeat for both sections             */
@@ -390,18 +396,19 @@ body:has(button:hover) .cursor {
    view. Uses display-font shadow scale (between hero and item sizes). */
 
 @keyframes wordHalo {
-  0%, 100% { text-shadow: none; }
+  0%, 100% { filter: none; }
   40%, 60% {
-    text-shadow:
-      0 0 12px rgba(255,255,255,0.90),
-      0 0 25px rgba(255,255,255,0.55),
-      0 0 50px rgba(255,255,255,0.28),
-      0 0 90px rgba(255,255,255,0.12);
+    filter:
+      drop-shadow(0 0 8px  rgba(255,255,255,0.90))
+      drop-shadow(0 0 18px rgba(255,255,255,0.55))
+      drop-shadow(0 0 35px rgba(255,255,255,0.28))
+      drop-shadow(0 0 65px rgba(255,255,255,0.12));
   }
 }
 
 .glow-word.glow-active {
   animation: wordHalo 3.6s ease-in-out infinite;
+  will-change: filter;
 }
 
 /* Cascade: clarity → constraints → deterministic (1.2 s apart = ⅓ cycle) */
@@ -816,6 +823,26 @@ body:has(button:hover) .cursor {
   z-index: 200;
   width: 0%;
   transition: width 0.1s linear;
+}
+
+/* ============================
+   PERFORMANCE: PAUSE WHEN HIDDEN
+   Tab-hidden class is added by JS visibilitychange handler.
+   Stops all glow animations and scroll pulse when the user
+   switches away — frees CPU/GPU immediately.
+   ============================ */
+.tab-hidden .glow-letter,
+.tab-hidden .glow-word,
+.tab-hidden .scroll-line::after {
+  animation-play-state: paused;
+}
+
+/* Respect user's reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .glow-letter, .glow-word, .scroll-line::after {
+    animation: none !important;
+    will-change: auto;
+  }
 }
 
 /* ============================

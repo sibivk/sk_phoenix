@@ -24,16 +24,16 @@ let cursorX = 0, cursorY = 0;
 document.addEventListener('mousemove', e => {
   mouseX = e.clientX;
   mouseY = e.clientY;
-  cursorDot.style.left = mouseX + 'px';
-  cursorDot.style.top  = mouseY + 'px';
+  // transform: GPU-composited, no layout reflow (unlike left/top)
+  cursorDot.style.transform = `translate(calc(${mouseX}px - 50%), calc(${mouseY}px - 50%))`;
 });
 
 // Smooth cursor follow
 (function animateCursor() {
   cursorX += (mouseX - cursorX) * 0.12;
   cursorY += (mouseY - cursorY) * 0.12;
-  cursor.style.left = cursorX + 'px';
-  cursor.style.top  = cursorY + 'px';
+  // Use transform instead of left/top — GPU composited, zero layout cost
+  cursor.style.transform = `translate(calc(${cursorX}px - 50%), calc(${cursorY}px - 50%))`;
   requestAnimationFrame(animateCursor);
 })();
 
@@ -69,12 +69,14 @@ musicBtn.addEventListener('click', () => {
   }
 });
 
-// Pause music when tab loses focus, resume when it returns
+// Pause music AND all CSS animations when tab loses focus
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     audio.pause();
-  } else if (musicBtn.classList.contains('playing')) {
-    audio.play().catch(() => {});
+    document.body.classList.add('tab-hidden');
+  } else {
+    if (musicBtn.classList.contains('playing')) audio.play().catch(() => {});
+    document.body.classList.remove('tab-hidden');
   }
 });
 
@@ -127,8 +129,17 @@ function illuminateWords() {
   });
 }
 
-window.addEventListener('scroll', illuminateWords, { passive: true });
-window.addEventListener('resize', illuminateWords, { passive: true });
+// Throttle illuminateWords to once per animation frame — avoids
+// calling getBoundingClientRect() multiple times per scroll event
+let illuminatePending = false;
+function scheduleIlluminate() {
+  if (illuminatePending) return;
+  illuminatePending = true;
+  requestAnimationFrame(() => { illuminateWords(); illuminatePending = false; });
+}
+
+window.addEventListener('scroll', scheduleIlluminate, { passive: true });
+window.addEventListener('resize', scheduleIlluminate, { passive: true });
 illuminateWords();
 
 // Philosophy word glow — fires once when section enters view

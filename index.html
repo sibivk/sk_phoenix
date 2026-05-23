@@ -25,7 +25,8 @@
   <div class="cursor" id="cursor"></div>
   <div class="cursor-dot" id="cursorDot"></div>
 
-  <audio id="bgAudio" loop preload="auto">
+  <!-- preload="none" — don't download 5.3 MB of audio until the user clicks Enter -->
+  <audio id="bgAudio" loop preload="none">
     <source src="assets/main.mp3" type="audio/mpeg">
   </audio>
 

@@ -1,19 +1,32 @@
-// Scroll progress bar
+// Scroll progress bar — uses transform:scaleX (GPU composited) instead of width (paint)
 const progressBar = document.createElement('div');
 progressBar.className = 'progress-bar';
 document.body.prepend(progressBar);
 
-window.addEventListener('scroll', () => {
-  const scrolled = window.scrollY;
-  const total = document.body.scrollHeight - window.innerHeight;
-  progressBar.style.width = (scrolled / total * 100) + '%';
-});
-
 // Nav background on scroll
 const nav = document.getElementById('nav');
-window.addEventListener('scroll', () => {
-  nav.classList.toggle('scrolled', window.scrollY > 60);
+
+// Cache total scroll height — constant during scroll, only changes on resize.
+// Reading document.body.scrollHeight on every scroll event forces a layout flush.
+let scrollTotal = Math.max(document.body.scrollHeight - window.innerHeight, 1);
+window.addEventListener('resize', () => {
+  scrollTotal = Math.max(document.body.scrollHeight - window.innerHeight, 1);
 }, { passive: true });
+
+// One rAF-gated handler for both progress bar and nav — replaces two
+// separate unthrottled listeners that previously fired on every scroll event
+let scrollPending = false;
+function onScroll() {
+  if (scrollPending) return;
+  scrollPending = true;
+  requestAnimationFrame(() => {
+    const y = window.scrollY;
+    progressBar.style.transform = `scaleX(${y / scrollTotal})`;
+    nav.classList.toggle('scrolled', y > 60);
+    scrollPending = false;
+  });
+}
+window.addEventListener('scroll', onScroll, { passive: true });
 
 // Custom cursor
 const cursor = document.getElementById('cursor');
@@ -21,18 +34,28 @@ const cursorDot = document.getElementById('cursorDot');
 let mouseX = 0, mouseY = 0;
 let cursorX = 0, cursorY = 0;
 
+// mousemove only stores coordinates — no DOM write here.
+// Previously cursorDot.style.transform was written on every mousemove event
+// (up to 1000 Hz on high-precision devices). Moving it to the rAF loop caps
+// DOM writes at 60fps which is all the display can show anyway.
 document.addEventListener('mousemove', e => {
   mouseX = e.clientX;
   mouseY = e.clientY;
-  // transform: GPU-composited, no layout reflow (unlike left/top)
-  cursorDot.style.transform = `translate(calc(${mouseX}px - 50%), calc(${mouseY}px - 50%))`;
 });
 
-// Smooth cursor follow — only write to DOM when position meaningfully changed.
-// Without the threshold, floating-point math never fully converges, causing
-// a style write every rAF frame even when the cursor hasn't moved.
+// Single rAF loop drives both cursor elements.
+// Dot: instant snap (zero lag). Ring: smooth lag via exponential lerp.
+// Both only write to DOM when position actually changed.
 let prevCursorX = 0, prevCursorY = 0;
+let prevDotX = -1, prevDotY = -1;
 (function animateCursor() {
+  // Instant cursor dot — write only when mouse moved
+  if (mouseX !== prevDotX || mouseY !== prevDotY) {
+    cursorDot.style.transform = `translate(calc(${mouseX}px - 50%), calc(${mouseY}px - 50%))`;
+    prevDotX = mouseX;
+    prevDotY = mouseY;
+  }
+  // Lagged cursor ring — write only when position meaningfully changed
   cursorX += (mouseX - cursorX) * 0.12;
   cursorY += (mouseY - cursorY) * 0.12;
   if (Math.abs(cursorX - prevCursorX) > 0.1 || Math.abs(cursorY - prevCursorY) > 0.1) {
@@ -183,7 +206,7 @@ if (heroImg) {
     requestAnimationFrame(() => {
       const y = window.scrollY;
       if (y < window.innerHeight) {
-        heroImg.style.transform = `scale(1) translateY(${y * 0.12}px)`;
+        heroImg.style.transform = `translateY(${y * 0.12}px)`;
       }
       parallaxPending = false;
     });

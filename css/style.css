@@ -90,9 +90,10 @@ body:has(button:hover) .cursor {
 }
 
 .nav.scrolled {
-  background: rgba(0,0,0,0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* backdrop-filter: blur() was removed — it forces the GPU to re-composite a
+     blurred snapshot of everything below the nav on every frame while scrolling.
+     At 85 % opacity the blur was invisible anyway; 92 % solid looks identical. */
+  background: rgba(0,0,0,0.92);
   border-bottom: 1px solid var(--grey-dim);
 }
 
@@ -192,7 +193,10 @@ body:has(button:hover) .cursor {
   height: 100%;
   object-fit: cover;
   object-position: center 15%;
-  filter: blur(2.5px) contrast(1.05);
+  /* Reduced from blur(2.5px) — hero image is on a compositing layer due to the
+     parallax transform, so the blur is re-applied by the GPU every scroll frame.
+     blur(1px) is visually imperceptible vs 2.5px but ~6× cheaper to apply. */
+  filter: blur(1px) contrast(1.05);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 15%, black 40%),
                       linear-gradient(to bottom, black 60%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 15%, black 40%);
@@ -816,8 +820,12 @@ body:has(button:hover) .cursor {
   height: 1px;
   background: rgba(255,255,255,0.5);
   z-index: 200;
-  width: 0%;
-  transition: width 0.1s linear;
+  /* Use transform:scaleX (GPU composited, zero paint cost) instead of
+     width (triggers layout + paint on every scroll event). */
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
 }
 
 /* ============================

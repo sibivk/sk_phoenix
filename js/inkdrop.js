@@ -128,11 +128,28 @@ function runInkDrop() {
         requestAnimationFrame(frame);
 
       } else {
-        // Period is fully formed — draw it once and stop the loop permanently
+        // Period fully formed — swap the canvas for a lightweight CSS dot.
+        // The canvas holds a ~10–25 MB GPU texture even off-screen; a div holds none.
+        // We draw one final frame so there's no flicker during the swap.
         drawBall(posX, floorY - PERIOD_R, PERIOD_R, 0, 1);
+
+        const dot = document.createElement('div');
+        dot.style.cssText = [
+          'position:absolute',
+          `left:${posX - PERIOD_R}px`,
+          `top:${floorY - PERIOD_R * 2}px`,
+          `width:${PERIOD_R * 2}px`,
+          `height:${PERIOD_R * 2}px`,
+          'border-radius:50%',
+          'background:rgba(255,255,255,0.95)',
+          'pointer-events:none',
+          'z-index:10',
+        ].join(';');
+        hero.appendChild(dot);
+        cvs.remove(); // release GPU texture — no further rAF needed
+
         // Cascade the halo glow on S, V, K — CSS handles the animation
         document.querySelectorAll('.glow-letter').forEach(el => el.classList.add('glow-active'));
-        // No further requestAnimationFrame — canvas stays with the period dot
       }
     }
   }

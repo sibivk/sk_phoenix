@@ -28,12 +28,18 @@ document.addEventListener('mousemove', e => {
   cursorDot.style.transform = `translate(calc(${mouseX}px - 50%), calc(${mouseY}px - 50%))`;
 });
 
-// Smooth cursor follow
+// Smooth cursor follow — only write to DOM when position meaningfully changed.
+// Without the threshold, floating-point math never fully converges, causing
+// a style write every rAF frame even when the cursor hasn't moved.
+let prevCursorX = 0, prevCursorY = 0;
 (function animateCursor() {
   cursorX += (mouseX - cursorX) * 0.12;
   cursorY += (mouseY - cursorY) * 0.12;
-  // Use transform instead of left/top — GPU composited, zero layout cost
-  cursor.style.transform = `translate(calc(${cursorX}px - 50%), calc(${cursorY}px - 50%))`;
+  if (Math.abs(cursorX - prevCursorX) > 0.1 || Math.abs(cursorY - prevCursorY) > 0.1) {
+    cursor.style.transform = `translate(calc(${cursorX}px - 50%), calc(${cursorY}px - 50%))`;
+    prevCursorX = cursorX;
+    prevCursorY = cursorY;
+  }
   requestAnimationFrame(animateCursor);
 })();
 
@@ -118,15 +124,29 @@ function illuminateWords() {
   if (!quoteWords.length) return;
   const vh = window.innerHeight;
 
-  quoteWords.forEach(word => {
-    const rect   = word.getBoundingClientRect();
-    const center = rect.top + rect.height * 0.5;
-    // Word illuminates as it scrolls from 88% to 50% of viewport height
+  // Batch ALL reads before ANY writes — prevents layout thrashing.
+  // Interleaving getBoundingClientRect() with style writes forces N
+  // layout flushes instead of one, costing ~17× more on this quote.
+  const data = Array.from(quoteWords).map(word => ({
+    word,
+    rect: word.getBoundingClientRect(),
+  }));
+
+  let allLit = true;
+  data.forEach(({ word, rect }) => {
+    const center   = rect.top + rect.height * 0.5;
     const progress = Math.max(0, Math.min(1, (vh * 0.88 - center) / (vh * 0.38)));
     const opacity  = 0.12 + progress * 0.88;
     word.style.setProperty('--word-opacity', opacity.toFixed(3));
     word.classList.toggle('word-lit', progress >= 0.98);
+    if (progress < 0.98) allLit = false;
   });
+
+  // All words fully lit — nothing left to track; stop the scroll listener
+  if (allLit) {
+    window.removeEventListener('scroll', scheduleIlluminate);
+    window.removeEventListener('resize', scheduleIlluminate);
+  }
 }
 
 // Throttle illuminateWords to once per animation frame — avoids
@@ -153,14 +173,20 @@ if (philoSection) {
   }, { threshold: 0.25 }).observe(philoSection);
 }
 
-// Subtle parallax on hero image
+// Subtle parallax on hero image — rAF-gated so it runs at most once per frame
 const heroImg = document.getElementById('heroImg');
 if (heroImg) {
+  let parallaxPending = false;
   window.addEventListener('scroll', () => {
-    const y = window.scrollY;
-    if (y < window.innerHeight) {
-      heroImg.style.transform = `scale(1) translateY(${y * 0.12}px)`;
-    }
+    if (parallaxPending) return;
+    parallaxPending = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      if (y < window.innerHeight) {
+        heroImg.style.transform = `scale(1) translateY(${y * 0.12}px)`;
+      }
+      parallaxPending = false;
+    });
   }, { passive: true });
 }
 

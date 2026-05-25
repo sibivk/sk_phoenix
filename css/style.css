@@ -375,7 +375,8 @@ body:has(button:hover) .cursor {
 }
 
 .capability-item.visible .glow-letter,
-.focus-item.visible .glow-letter {
+.focus-item.visible .glow-letter,
+.incarnation-card.visible .glow-letter {
   animation-name:            letterHaloSm;
   animation-duration:        3.6s;
   animation-timing-function: ease-in-out;
@@ -753,6 +754,186 @@ body:has(button:hover) .cursor {
 }
 
 /* ============================
+   INCARNATIONS
+   Three identity panels — each with a distinct typographic treatment,
+   ghost watermark name, one-shot scan-line on reveal, and hover glow.
+   All animations are GPU-composited (transform / opacity).
+   ============================ */
+.section-incarnations {
+  overflow: hidden;
+}
+
+/* Override reveal stagger for a more dramatic cadence */
+.section-incarnations .incarnation-card.d-1 { --d: 0s;    }
+.section-incarnations .incarnation-card.d-2 { --d: 0.20s; }
+.section-incarnations .incarnation-card.d-3 { --d: 0.40s; }
+
+.incarnations-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-top: 3rem;
+}
+
+.incarnation-card {
+  position: relative;
+  padding: 3.5rem 3.2vw 4rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255,255,255,0.07);
+}
+
+.incarnation-card:last-child {
+  border-right: none;
+}
+
+/* ── Hover radial glow — opacity transition is GPU composited ── */
+.incarnation-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+  z-index: 0;
+}
+
+.incarnation-card:hover::before { opacity: 1; }
+
+.ic-1::before {
+  background: radial-gradient(ellipse at 25% 65%,
+    rgba(255,255,255,0.05) 0%, transparent 65%);
+}
+.ic-2::before {
+  background: radial-gradient(ellipse at 50% 50%,
+    rgba(255,255,255,0.07) 0%, transparent 65%);
+}
+.ic-3::before {
+  background: radial-gradient(ellipse at 75% 65%,
+    rgba(255,255,255,0.05) 0%, transparent 65%);
+}
+
+/* ── One-shot scan line on reveal — transform only, GPU composited ── */
+.incarnation-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent  0%,
+    rgba(255,255,255,0.75) 50%,
+    transparent  100%
+  );
+  transform: translateX(-100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.incarnation-card.visible::after {
+  /* delay = reveal delay + 0.3 s so the line fires as the card settles */
+  animation: incScan 1.1s cubic-bezier(0.22, 1, 0.36, 1)
+             calc(var(--d, 0s) + 0.35s) forwards;
+}
+
+@keyframes incScan {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%);  }
+}
+
+/* ── Content layers sit above the ::before glow ── */
+.incarnation-card > * { position: relative; z-index: 1; }
+
+.incarnation-num {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.54rem;
+  font-weight: 400;
+  letter-spacing: 0.36em;
+  color: rgba(255,255,255,0.25);
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+
+.incarnation-name {
+  font-family: var(--font-display);
+  line-height: 0.88;
+  letter-spacing: 0.01em;
+  margin-bottom: 2rem;
+}
+
+/* Identity-specific name treatments */
+.ic-1 .incarnation-name {
+  font-size: clamp(4rem, 6.5vw, 9rem);
+  color: var(--white);
+}
+
+/* GOD MODE — etched outline: transparent fill, white stroke */
+.ic-2 .incarnation-name {
+  font-size: clamp(3.2rem, 5.8vw, 8rem);
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255,255,255,0.88);
+}
+
+/* THE ARK — dimmed, depth of preservation */
+.ic-3 .incarnation-name {
+  font-size: clamp(3rem, 5.2vw, 7.2rem);
+  color: rgba(255,255,255,0.52);
+  letter-spacing: 0.03em;
+}
+
+/* Expanding rule on hover — transform:scaleX is GPU composited */
+.incarnation-rule {
+  width: 28px;
+  height: 1px;
+  background: rgba(255,255,255,0.22);
+  margin-bottom: 1.2rem;
+  transform-origin: left center;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.incarnation-card:hover .incarnation-rule {
+  transform: scaleX(2.5); /* 28 px → 70 px */
+}
+
+.incarnation-sub {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 400;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 1rem;
+}
+
+.incarnation-desc {
+  font-size: clamp(0.7rem, 0.85vw, 0.85rem);
+  font-weight: 300;
+  line-height: 1.85;
+  color: rgba(255,255,255,0.32);
+  max-width: 300px;
+}
+
+/* Ghost watermark name — static, no animation, zero ongoing cost */
+.incarnation-bg-name {
+  position: absolute;
+  bottom: -0.08em;
+  right: -0.06em;
+  font-family: var(--font-display);
+  font-size: clamp(7rem, 13vw, 17rem);
+  line-height: 1;
+  color: rgba(255,255,255,0.022);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  z-index: 0;
+}
+
+/* ============================
    FOOTER
    ============================ */
 .footer {
@@ -859,7 +1040,8 @@ body.nav-scrolling .scroll-line::after {
 #hero.glow-paused .scroll-line::after,
 .section-capabilities.glow-paused .glow-letter,
 .section-focus.glow-paused .glow-letter,
-.section-philosophy.glow-paused .glow-word {
+.section-philosophy.glow-paused .glow-word,
+.section-incarnations.glow-paused .glow-letter {
   animation-play-state: paused !important;
 }
 
@@ -905,6 +1087,27 @@ body.nav-scrolling .scroll-line::after {
   .nav-links {
     display: none;
   }
+
+  /* Incarnations — stack to single column on mobile */
+  .incarnations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .incarnation-card {
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 3rem 1.6rem 3.5rem;
+  }
+
+  .incarnation-card:last-child { border-bottom: none; }
+
+  .ic-1 .incarnation-name { font-size: clamp(3.5rem, 22vw, 6rem); }
+  .ic-2 .incarnation-name { font-size: clamp(2.8rem, 18vw, 5rem); }
+  .ic-3 .incarnation-name { font-size: clamp(2.6rem, 17vw, 4.8rem); }
+
+  .incarnation-bg-name { font-size: clamp(6rem, 28vw, 10rem); }
+
+  .incarnation-desc { max-width: 100%; }
 }
 
 /* ============================

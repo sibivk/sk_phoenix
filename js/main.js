@@ -229,6 +229,7 @@ const glowObserver = new IntersectionObserver(entries => {
   document.querySelector('.section-capabilities'),
   document.querySelector('.section-focus'),
   document.querySelector('.section-philosophy'),
+  document.querySelector('.section-incarnations'),
 ].filter(Boolean).forEach(el => glowObserver.observe(el));
 
 // Nav-click animation freeze — pause all glow animations for 2 s after any

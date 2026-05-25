@@ -768,6 +768,17 @@ body:has(button:hover) .cursor {
 .section-incarnations .incarnation-card.d-2 { --d: 0.20s; }
 .section-incarnations .incarnation-card.d-3 { --d: 0.40s; }
 
+.incarnations-intro {
+  font-size: clamp(0.72rem, 0.9vw, 0.88rem);
+  font-weight: 300;
+  line-height: 1.9;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.35);
+  max-width: 580px;
+  margin-top: 1.4rem;
+  margin-bottom: 3rem;
+}
+
 .incarnations-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

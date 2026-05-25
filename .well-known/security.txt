@@ -1,0 +1,53 @@
+#                              
+#                  @    @                  
+#                  @@@@@@@                 
+#                @@@@@@@@@@                
+#               @@@@@ @ @@@@               
+#                @@@@ @@@@@@@@@            
+#               @@@@@@ @@                  
+#              @@@@@@@@@                   
+#          @@@@@ @@@@@@@@@                 
+#           @@@@@ @@@@@@@@@                
+#              @@@ @@@@@@@@@               
+#           @@@@  @ @@@@@@@@               
+#            @@@@@  @@@@@@@@               
+#                   @@@@@@@                
+#                   @@@@@@                 
+#                  @@@@@                   
+#                  @@@@                    
+#                 @@@@                     
+#                 @@@                      
+#                 @@  @@@@                 
+#                 @@@  @ @                 
+#                  @@@  @@                 
+#                     @@                   
+#                                                                                                                          
+#                                                                                                    
+#                                                                                                    
+# Contact Information
+Contact: mailto:security@sibikaitharath.com
+
+# Link to your public PGP key for encrypted reporting
+Encryption: https://sibikaitharath.com/pgp-key.txt
+
+# Canonical URL
+Canonical: https://sibikaitharath.com/.well-known/security.txt
+
+# Policy
+Policy: https://sibikaitharath.com/.well-known/SECURITY.md
+
+# Preferred Languages
+Preferred-Languages: en
+
+# Expiration (Valid through May 2027)
+Expires: 2027-05-25T12:00:00.000Z                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    

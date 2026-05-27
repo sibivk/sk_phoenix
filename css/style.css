@@ -809,11 +809,11 @@ body:has(button:hover) .cursor {
 
 .incarnations-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border-top: 1px solid rgba(255,255,255,0.07);
   border-bottom: 1px solid rgba(255,255,255,0.07);
   margin-top: 3rem;
-  transition: grid-template-columns 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: grid-template-columns 0.52s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .incarnation-card {
@@ -991,8 +991,14 @@ body:has(button:hover) .cursor {
 .ic-img,
 .ic-meta { display: none; }
 
-/* ── Dormant card (sibling of the active card) ── */
+/* ── Grid column expansion — minmax(0) allows tracks to animate to 0 ── */
+.incarnations-grid.exp-1 { grid-template-columns: minmax(0, 1fr) minmax(0, 0fr) minmax(0, 0fr); }
+.incarnations-grid.exp-2 { grid-template-columns: minmax(0, 0fr) minmax(0, 1fr) minmax(0, 0fr); }
+.incarnations-grid.exp-3 { grid-template-columns: minmax(0, 0fr) minmax(0, 0fr) minmax(0, 1fr); }
+
+/* ── Dormant card — flip out while its column collapses ── */
 .incarnation-card.ic-dormant {
+  min-width: 0;                 /* allow grid track to shrink to 0 */
   transform: perspective(900px) rotateY(90deg);
   opacity: 0;
   pointer-events: none;
@@ -1000,8 +1006,7 @@ body:has(button:hover) .cursor {
 
 /* ── Active / expanded card ── */
 .incarnation-card.ic-active {
-  grid-column: 1 / -1;         /* span all three columns */
-  flex-direction: row;
+  flex-direction: row;          /* no grid-column override needed — track expands via exp-N */
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 0 4vw;
@@ -1027,18 +1032,22 @@ body:has(button:hover) .cursor {
 /* hide watermark in expanded view */
 .incarnation-card.ic-active .incarnation-bg-name { display: none; }
 
-/* image — right column, hidden until ic-reveal */
+/* image — starts at 0 width, slides in when ic-reveal is added,
+   pushing ic-text left — this is the smooth "heading moves left" effect */
 .incarnation-card.ic-active .ic-img {
   display: block;
   flex: 0 0 auto;
   align-self: center;
   max-height: 280px;
-  max-width: 48%;
+  max-width: 0;             /* starts collapsed — animates to 48% on reveal */
   width: auto;
   height: auto;
+  overflow: hidden;
   border: 1px solid rgba(255,255,255,0.07);
   opacity: 0;
-  transition: opacity 0.5s ease;
+  /* max-width drives heading left; opacity staggered slightly after */
+  transition: max-width 0.42s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity    0.36s ease 0.14s;
 }
 
 /* meta block — full-width row below text + image */
@@ -1056,7 +1065,7 @@ body:has(button:hover) .cursor {
 }
 
 /* fade in image + meta once ic-reveal is added */
-.incarnation-card.ic-reveal .ic-img  { opacity: 1; }
+.incarnation-card.ic-reveal .ic-img  { max-width: 48%; opacity: 1; }
 .incarnation-card.ic-reveal .ic-meta { opacity: 1; }
 
 /* meta line typography */
@@ -1073,14 +1082,23 @@ body:has(button:hover) .cursor {
 
 /* ── Mobile: stacked cards, simple inline reveal ── */
 @media (max-width: 768px) {
+  /* disable grid column transition on mobile — avoids resize flicker */
+  .incarnations-grid { transition: none; }
+
   .incarnation-card.ic-active {
     flex-direction: column;
     gap: 2rem 0;
   }
+  /* override max-width:0 — on mobile image is already full-width, just fade in */
   .incarnation-card.ic-active .ic-img {
     max-width: 100%;
     max-height: 220px;
     align-self: flex-start;
+    transition: opacity 0.4s ease;
+  }
+  .incarnation-card.ic-reveal .ic-img {
+    max-width: 100%;
+    opacity: 1;
   }
   .incarnation-card.ic-active .ic-meta {
     flex-direction: column;

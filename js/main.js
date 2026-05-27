@@ -267,64 +267,77 @@ setInterval(() => {
 }, 1000);
 
 // ── Incarnations card expand / collapse ──────────────────────────────────────
-// Click any card → other two flip out (rotateY 90°), clicked card expands to
-// full row width showing image + meta details.  Click again to collapse.
-// display:none is used on dormant cards so grid-column:1/-1 can claim the row;
-// it is only toggled AFTER the CSS transition has finished (450 ms), so the
-// flip animation runs at its natural pace before the layout recalculates.
+// Click any card → grid column expands (CSS transition, no layout thrash),
+// other cards flip out via rotateY.  ic-active switches to row mode at t=0 so
+// the heading is already left-aligned while the column width grows.  The image
+// slides in from the right via max-width transition, which pushes the heading
+// further left smoothly.  No display:none toggling — zero forced reflows.
 (function initIncarnations() {
+  const grid  = document.querySelector('.incarnations-grid');
   const cards = Array.from(document.querySelectorAll('.incarnation-card'));
-  if (!cards.length) return;
+  if (!grid || !cards.length) return;
 
-  let active = null;   // currently expanded card (or null)
-  let t1 = null, t2 = null;
+  let active = null;
+  let t1 = null;
 
   function expand(card) {
     if (active) return;
     active = card;
+    const idx = cards.indexOf(card);
 
-    // Flip other cards out
-    cards.forEach(c => { if (c !== card) c.classList.add('ic-dormant'); });
-
-    // After flip animation completes: hide them + expand active card
-    t1 = setTimeout(() => {
-      cards.forEach(c => { if (c !== card) c.style.display = 'none'; });
+    // All at once: expand the column, flip siblings, switch active to row mode.
+    // No setTimeout here — batched into one rAF so the browser sees a single
+    // style update and avoids two consecutive layout recalculations.
+    requestAnimationFrame(() => {
+      grid.classList.add('exp-' + (idx + 1));
+      cards.forEach((c, i) => { if (i !== idx) c.classList.add('ic-dormant'); });
       card.classList.add('ic-active');
-      // Stagger: reveal image + meta after layout settles
-      t2 = setTimeout(() => card.classList.add('ic-reveal'), 180);
-    }, 440);
+    });
+
+    // Slide image in after the column has mostly expanded (~80 % through 520 ms)
+    t1 = setTimeout(() => card.classList.add('ic-reveal'), 390);
   }
 
   function collapse() {
     if (!active) return;
-    const card = active;
+    const card  = active;
+    const idx   = cards.indexOf(card);
     clearTimeout(t1);
-    clearTimeout(t2);
 
-    // Fade out the expanded content
+    // Image slides back to 0, meta fades — transitions run in reverse
     card.classList.remove('ic-reveal');
 
-    // After content has faded: flip the active card out too, then reset
+    // After content has reversed: restore grid + row mode in one batch
     t1 = setTimeout(() => {
-      card.classList.add('ic-dormant');   // active card now invisible
-
-      t2 = setTimeout(() => {
-        card.classList.remove('ic-active'); // restore layout, drop grid-column
-        cards.forEach(c => { c.style.display = ''; }); // restore dormant cards
-
-        // Animate all three cards back in simultaneously next frame
-        requestAnimationFrame(() => requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        card.classList.remove('ic-active');
+        grid.classList.remove('exp-' + (idx + 1));
+        // Un-flip siblings on the next frame so their rotateY→0 is animated
+        requestAnimationFrame(() => {
           cards.forEach(c => c.classList.remove('ic-dormant'));
           active = null;
-        }));
-      }, 40);
-    }, 360);
+        });
+      });
+    }, 400);
   }
 
+  // Desktop: full expand/collapse.  Mobile (≤768 px): inline toggle, no grid change.
   cards.forEach(card => {
     card.addEventListener('click', () => {
-      if (card === active) collapse();
-      else if (!active) expand(card);
+      if (window.innerWidth <= 768) {
+        if (card === active) {
+          card.classList.remove('ic-active', 'ic-reveal');
+          active = null;
+        } else {
+          if (active) { active.classList.remove('ic-active', 'ic-reveal'); }
+          active = card;
+          card.classList.add('ic-active');
+          requestAnimationFrame(() => card.classList.add('ic-reveal'));
+        }
+      } else {
+        if (card === active) collapse();
+        else if (!active) expand(card);
+      }
     });
   });
 })();

@@ -265,3 +265,66 @@ setInterval(() => {
   cursorDot.style.transform =
     `translate(calc(${mouseX + micro}px - 50%), calc(${mouseY}px - 50%))`;
 }, 1000);
+
+// ── Incarnations card expand / collapse ──────────────────────────────────────
+// Click any card → other two flip out (rotateY 90°), clicked card expands to
+// full row width showing image + meta details.  Click again to collapse.
+// display:none is used on dormant cards so grid-column:1/-1 can claim the row;
+// it is only toggled AFTER the CSS transition has finished (450 ms), so the
+// flip animation runs at its natural pace before the layout recalculates.
+(function initIncarnations() {
+  const cards = Array.from(document.querySelectorAll('.incarnation-card'));
+  if (!cards.length) return;
+
+  let active = null;   // currently expanded card (or null)
+  let t1 = null, t2 = null;
+
+  function expand(card) {
+    if (active) return;
+    active = card;
+
+    // Flip other cards out
+    cards.forEach(c => { if (c !== card) c.classList.add('ic-dormant'); });
+
+    // After flip animation completes: hide them + expand active card
+    t1 = setTimeout(() => {
+      cards.forEach(c => { if (c !== card) c.style.display = 'none'; });
+      card.classList.add('ic-active');
+      // Stagger: reveal image + meta after layout settles
+      t2 = setTimeout(() => card.classList.add('ic-reveal'), 180);
+    }, 440);
+  }
+
+  function collapse() {
+    if (!active) return;
+    const card = active;
+    clearTimeout(t1);
+    clearTimeout(t2);
+
+    // Fade out the expanded content
+    card.classList.remove('ic-reveal');
+
+    // After content has faded: flip the active card out too, then reset
+    t1 = setTimeout(() => {
+      card.classList.add('ic-dormant');   // active card now invisible
+
+      t2 = setTimeout(() => {
+        card.classList.remove('ic-active'); // restore layout, drop grid-column
+        cards.forEach(c => { c.style.display = ''; }); // restore dormant cards
+
+        // Animate all three cards back in simultaneously next frame
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          cards.forEach(c => c.classList.remove('ic-dormant'));
+          active = null;
+        }));
+      }, 40);
+    }, 360);
+  }
+
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      if (card === active) collapse();
+      else if (!active) expand(card);
+    });
+  });
+})();

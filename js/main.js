@@ -267,61 +267,83 @@ setInterval(() => {
 }, 1000);
 
 // ── Incarnations card expand / collapse ──────────────────────────────────────
-// Click any card → grid column expands (CSS transition, no layout thrash),
-// other cards flip out via rotateY.  ic-active switches to row mode at t=0 so
-// the heading is already left-aligned while the column width grows.  The image
-// slides in from the right via max-width transition, which pushes the heading
-// further left smoothly.  No display:none toggling — zero forced reflows.
+// Opening sequence (desktop):
+//   1. Dormant cards flip out (rotateY + opacity, 0.45 s).
+//   2. After 420 ms: dormant cards go display:none (already invisible),
+//      active card gets grid-column:1/-1 → instantly full-width.
+//      Simultaneously, an inline transform:translateX(N%) is applied to place
+//      the card visually at its original grid position.
+//   3. One rAF later: inline transform is removed — CSS rule translateX(0%)
+//      takes over and the browser runs the transform transition (0.45 s).
+//      The heading glides to the left edge.  Pure GPU composite, zero layout
+//      recalculation per frame.
+//   4. After the slide (870 ms total): ic-reveal fades in image + meta.
+//
+// Closing: image/meta fade, then all cards fade out together and flip back in.
 (function initIncarnations() {
-  const grid  = document.querySelector('.incarnations-grid');
   const cards = Array.from(document.querySelectorAll('.incarnation-card'));
-  if (!grid || !cards.length) return;
+  if (!cards.length) return;
+
+  // Starting translateX percentage for each card index (0, 1, 2)
+  // = the card's left-edge offset as a fraction of the full grid width
+  const START_X = ['0%', '33.333%', '66.666%'];
 
   let active = null;
-  let t1 = null;
+  let t1 = null, t2 = null;
 
   function expand(card) {
     if (active) return;
     active = card;
     const idx = cards.indexOf(card);
 
-    // All at once: expand the column, flip siblings, switch active to row mode.
-    // No setTimeout here — batched into one rAF so the browser sees a single
-    // style update and avoids two consecutive layout recalculations.
-    requestAnimationFrame(() => {
-      grid.classList.add('exp-' + (idx + 1));
-      cards.forEach((c, i) => { if (i !== idx) c.classList.add('ic-dormant'); });
-      card.classList.add('ic-active');
-    });
+    // Step 1: flip dormant cards out
+    cards.forEach((c, i) => { if (i !== idx) c.classList.add('ic-dormant'); });
 
-    // Slide image in after the column has mostly expanded (~80 % through 520 ms)
-    t1 = setTimeout(() => card.classList.add('ic-reveal'), 390);
+    // Step 2: after dormant animation, expand active card
+    t1 = setTimeout(() => {
+      // Hide dormant from layout (they are already visually gone)
+      cards.forEach(c => { if (c !== card) c.style.display = 'none'; });
+
+      // Pin card visually at its original position, then apply full-width layout
+      card.style.transform = `translateX(${START_X[idx]})`;
+      card.classList.add('ic-active');           // grid-column:1/-1, flex row
+
+      // Step 3: one rAF to let the browser register the inline transform,
+      // then remove it — triggers transition translateX(N%) → translateX(0%)
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        card.style.transform = '';               // CSS rule translateX(0%) wins
+      }));
+
+      // Step 4: fade in image + meta after slide lands
+      t2 = setTimeout(() => card.classList.add('ic-reveal'), 460);
+    }, 420);
   }
 
   function collapse() {
     if (!active) return;
-    const card  = active;
-    const idx   = cards.indexOf(card);
+    const card = active;
     clearTimeout(t1);
+    clearTimeout(t2);
 
-    // Image slides back to 0, meta fades — transitions run in reverse
+    // Fade out expanded content (transitions run in reverse)
     card.classList.remove('ic-reveal');
 
-    // After content has reversed: restore grid + row mode in one batch
+    // After content has faded, collapse everything at once
     t1 = setTimeout(() => {
-      requestAnimationFrame(() => {
-        card.classList.remove('ic-active');
-        grid.classList.remove('exp-' + (idx + 1));
-        // Un-flip siblings on the next frame so their rotateY→0 is animated
-        requestAnimationFrame(() => {
-          cards.forEach(c => c.classList.remove('ic-dormant'));
-          active = null;
-        });
-      });
-    }, 400);
+      // Make all three cards dormant (invisible) so layout reset is seamless
+      cards.forEach(c => c.classList.add('ic-dormant'));
+      card.classList.remove('ic-active');        // drop grid-column:1/-1
+      cards.forEach(c => { c.style.display = ''; }); // restore to grid
+
+      // Animate all three back in on the next frame
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        cards.forEach(c => c.classList.remove('ic-dormant'));
+        active = null;
+      }));
+    }, 380);
   }
 
-  // Desktop: full expand/collapse.  Mobile (≤768 px): inline toggle, no grid change.
+  // Desktop: full slide animation.  Mobile (≤768 px): simple inline accordion.
   cards.forEach(card => {
     card.addEventListener('click', () => {
       if (window.innerWidth <= 768) {
@@ -334,10 +356,10 @@ setInterval(() => {
           card.classList.add('ic-active');
           requestAnimationFrame(() => card.classList.add('ic-reveal'));
         }
-      } else {
-        if (card === active) collapse();
-        else if (!active) expand(card);
+        return;
       }
+      if (card === active) collapse();
+      else if (!active) expand(card);
     });
   });
 })();

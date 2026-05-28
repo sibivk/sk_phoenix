@@ -34,37 +34,46 @@ const cursorDot = document.getElementById('cursorDot');
 let mouseX = 0, mouseY = 0;
 let cursorX = 0, cursorY = 0;
 
-// mousemove only stores coordinates — no DOM write here.
-// Previously cursorDot.style.transform was written on every mousemove event
-// (up to 1000 Hz on high-precision devices). Moving it to the rAF loop caps
-// DOM writes at 60fps which is all the display can show anyway.
-document.addEventListener('mousemove', e => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-});
-
-// Single rAF loop drives both cursor elements.
-// Dot: instant snap (zero lag). Ring: smooth lag via exponential lerp.
-// Both only write to DOM when position actually changed.
+// Custom cursor — self-terminating rAF loop.
+// The loop only runs while the lagged ring is still catching up to the mouse.
+// Once it converges (< 0.1 px delta) the loop stops entirely, freeing the
+// browser's rendering pipeline from running at 60 fps for no visual reason.
+// mousemove restarts it on demand.  This eliminates the primary source of
+// continuous CPU/GPU drain on pages where the cursor isn't moving.
 let prevCursorX = 0, prevCursorY = 0;
 let prevDotX = -1, prevDotY = -1;
-(function animateCursor() {
-  // Instant cursor dot — write only when mouse moved
+let _cursorRafId = null;
+
+function animateCursor() {
+  // Dot — instant snap; write only when mouse moved
   if (mouseX !== prevDotX || mouseY !== prevDotY) {
     cursorDot.style.transform = `translate(calc(${mouseX}px - 50%), calc(${mouseY}px - 50%))`;
     prevDotX = mouseX;
     prevDotY = mouseY;
   }
-  // Lagged cursor ring — write only when position meaningfully changed
+
+  // Ring — smooth lag via exponential lerp
   cursorX += (mouseX - cursorX) * 0.12;
   cursorY += (mouseY - cursorY) * 0.12;
+
   if (Math.abs(cursorX - prevCursorX) > 0.1 || Math.abs(cursorY - prevCursorY) > 0.1) {
     cursor.style.transform = `translate(calc(${cursorX}px - 50%), calc(${cursorY}px - 50%))`;
     prevCursorX = cursorX;
     prevCursorY = cursorY;
+    _cursorRafId = requestAnimationFrame(animateCursor); // ring still moving
+  } else {
+    _cursorRafId = null; // ring converged — stop loop until next mousemove
   }
-  requestAnimationFrame(animateCursor);
-})();
+}
+
+// mousemove: record coords and (re)start the loop if it went idle
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  if (!_cursorRafId) {
+    _cursorRafId = requestAnimationFrame(animateCursor);
+  }
+});
 
 // Scroll reveal via IntersectionObserver
 const reveals = document.querySelectorAll('.reveal');
@@ -249,22 +258,6 @@ document.querySelectorAll('.nav-links a, .footer-nav a').forEach(link => {
     }, 2000);
   });
 });
-
-// GPU power-state ping — fires once per second to keep the GPU driver
-// from entering deep DVFS power-save (which causes 5-8 s wake-up lag).
-// A 60fps keepalive element caused thermal throttling after ~2 min; a
-// 1fps ping prevents deep sleep without building sustained heat.
-// Writes a sub-pixel (0.0002 px) alternating offset — genuinely different
-// each call so the browser doesn't optimise the write away.
-// Skipped when the tab is hidden so there is zero background drain.
-let _gpuPingTick = 0;
-setInterval(() => {
-  if (document.hidden) return;
-  _gpuPingTick ^= 1;
-  const micro = _gpuPingTick * 0.0002; // 0 or 0.0002 px — physically undetectable
-  cursorDot.style.transform =
-    `translate(calc(${mouseX + micro}px - 50%), calc(${mouseY}px - 50%))`;
-}, 1000);
 
 // ── Incarnations card expand / collapse ──────────────────────────────────────
 // Opening sequence (desktop):

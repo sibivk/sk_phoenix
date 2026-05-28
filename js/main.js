@@ -294,12 +294,22 @@ document.querySelectorAll('.nav-links a, .footer-nav a').forEach(link => {
     active = card;
     const idx = cards.indexOf(card);
 
-    // Measure NOW — dormant CSS transform (rotateY) doesn't affect layout dimensions.
+    // ── Measure BEFORE any DOM changes ──────────────────────────────────────
+    // Dormant rotateY is a CSS transform — doesn't alter layout, so these
+    // measurements stay accurate throughout the 420 ms dormant phase.
     const cardRect = card.getBoundingClientRect();
     const gridRect = grid ? grid.getBoundingClientRect() : cardRect;
-    const startLeft = cardRect.left - gridRect.left; // px offset from grid left
-    const startW    = cardRect.width;                // ~1/3 grid width
-    const gridW     = gridRect.width;                // full grid width
+    const startLeft = cardRect.left - gridRect.left;
+
+    // Card-relative word positions before expansion.
+    // "GOD MODE" → ic-word[0] = "GOD" on line 1, ic-word[1] = "MODE" on line 2.
+    // Card-relative coords (word rect − card rect) are scroll-invariant and
+    // unaffected by the card's future translateX, making the FLIP math clean.
+    const words = Array.from(card.querySelectorAll('.ic-word'));
+    const preRels = words.map(w => {
+      const r = w.getBoundingClientRect();
+      return { x: r.left - cardRect.left, y: r.top - cardRect.top };
+    });
 
     // Step 1: flip dormant cards out
     cards.forEach((c, i) => { if (i !== idx) c.classList.add('ic-dormant'); });
@@ -308,28 +318,52 @@ document.querySelectorAll('.nav-links a, .footer-nav a').forEach(link => {
       // Dormant cards are visually gone — remove from layout
       cards.forEach(c => { if (c !== card) c.style.display = 'none'; });
 
-      // Pin at original visual position/width (card auto-placed to col 1 after display:none)
-      card.style.width     = `${startW}px`;
+      // Slide card to original visual position; snap to full grid width via ic-expanding.
+      // No inline width needed — text is in column layout (no image) so we
+      // measure the full-width word positions right away.
       card.style.transform = `translateX(${startLeft}px)`;
+      card.classList.add('ic-expanding'); // grid-column:1/-1, col layout, no image
 
-      // ic-expanding: grid-column:1/-1 + flex-direction stays column + no image
-      card.classList.add('ic-expanding');
+      // ── FLIP: measure words in their NEW (inline) positions ─────────────
+      // getBoundingClientRect forces layout, so these values reflect the card
+      // at full grid width with ic-expanding applied.
+      const postCardRect = card.getBoundingClientRect();
+      const postRels = words.map(w => {
+        const r = w.getBoundingClientRect();
+        return { x: r.left - postCardRect.left, y: r.top - postCardRect.top };
+      });
 
-      // Double-rAF: commit the pinned state, then release both overrides
+      // Apply inverse transforms — make words APPEAR at their pre-expansion positions.
+      // The delta (pre − post) is the offset each word must move TO REACH its
+      // final position; applying it as an initial transform makes words START there.
+      words.forEach((w, i) => {
+        const dx = preRels[i].x - postRels[i].x;
+        const dy = preRels[i].y - postRels[i].y;
+        w.style.transition = 'none';
+        w.style.transform  = `translate(${dx.toFixed(2)}px,${dy.toFixed(2)}px)`;
+      });
+
+      // Double-rAF: commit the inverted state, then release both the card slide
+      // and the word FLIP so their CSS transitions fire simultaneously.
+      // • card translateX(startLeft) → translateX(0%)  [0.45 s, ease-out]
+      // • each word translate(dx,dy) → translate(0,0)  [0.55 s, spring]
+      // Result: card slides left while "MODE" visibly rises and joins "GOD".
+      // All GPU-composited — zero layout work per frame.
       requestAnimationFrame(() => requestAnimationFrame(() => {
-        card.style.transform = '';            // → .ic-expanding: translateX(0%)
-        card.style.width     = `${gridW}px`; // → width transition: startW → gridW
-        // Heading text reflows from stacked to inline as card grows.
+        card.style.transform = ''; // → ic-expanding: translateX(0%)
+        words.forEach(w => {
+          w.style.transition = 'transform 0.55s cubic-bezier(0.16,1,0.3,1)';
+          w.style.transform  = ''; // → translate(0,0)
+        });
       }));
 
-      // slide: 0.45 s  |  width: 0.05 s delay + 0.80 s = 0.85 s total
-      // Wait 900 ms for both to land, then switch to row layout + reveal.
+      // After both animations land (~600 ms): clean up, switch to row layout, reveal.
       t2 = setTimeout(() => {
-        card.style.width = '';              // already at gridW — natural width
+        words.forEach(w => { w.style.transition = ''; w.style.transform = ''; });
         card.classList.remove('ic-expanding');
-        card.classList.add('ic-active');    // flex-direction:row, image enters layout
+        card.classList.add('ic-active');
         t3 = setTimeout(() => card.classList.add('ic-reveal'), 180);
-      }, 900);
+      }, 620);
     }, 420);
   }
 
@@ -341,7 +375,11 @@ document.querySelectorAll('.nav-links a, .footer-nav a').forEach(link => {
     clearTimeout(t3);
 
     card.classList.remove('ic-reveal');
-    card.style.width = '';
+    // Clear any mid-animation word styles in case collapse interrupts expand
+    card.querySelectorAll('.ic-word').forEach(w => {
+      w.style.transition = '';
+      w.style.transform  = '';
+    });
 
     t1 = setTimeout(() => {
       cards.forEach(c => c.classList.add('ic-dormant'));

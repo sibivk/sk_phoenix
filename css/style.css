@@ -824,8 +824,7 @@ body:has(button:hover) .cursor {
   border-right: 1px solid rgba(255,255,255,0.07);
   cursor: pointer;
   transition: transform 0.45s cubic-bezier(0.0, 0.0, 0.2, 1),
-              opacity  0.42s ease,
-              width    0.80s ease 0.05s;
+              opacity  0.42s ease;
 }
 
 .incarnation-card:last-child {
@@ -985,6 +984,15 @@ body:has(button:hover) .cursor {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
+}
+
+/* Individual words inside incarnation-name.
+   Inline by default so the heading wraps naturally in narrow cards.
+   During expand(), JS measures each word's pre/post-expansion position
+   and animates them from stacked to inline using transform only —
+   GPU composited, zero layout work per frame. */
+.ic-word {
+  display: inline;
 }
 
 /* Hidden until card is expanded */

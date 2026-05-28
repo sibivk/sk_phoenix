@@ -268,21 +268,25 @@ setInterval(() => {
 
 // ── Incarnations card expand / collapse ──────────────────────────────────────
 // Opening sequence (desktop):
-//   1. Dormant cards flip out (rotateY + opacity, ~420 ms).
-//   2. Dormant cards go display:none.  Active card is pinned at its current
-//      visual width (inline width:Npx) and position (translateX:Npx) measured
-//      BEFORE the layout change, so it appears at its original grid slot.
-//   3. ic-active → grid-column:1/-1.  The inline width:Npx prevents the card
-//      from instantly stretching to full-row width.
-//   4. Double-rAF: remove both inline overrides simultaneously.
-//      • transform transitions translateX(Npx) → translateX(0%) — card slides left.
-//      • width   transitions startW px → gridW px  — card grows to full width.
-//      Both run concurrently; the heading text reflows naturally as the card
-//      widens (GOD MODE goes from stacked lines to a single line mid-animation).
-//   5. After transitions land (~510 ms after step 4): clear inline width,
-//      add ic-reveal — image + meta fade in.
+//   1. Dormant cards flip out (rotateY + opacity, 420 ms).
+//   2. Dormant cards → display:none.  Active card pinned at measured startW/startLeft.
+//   3. ic-expanding: grid-column:1/-1 ONLY — flex-direction stays column,
+//      .ic-img stays display:none.  The heading text fills the FULL card width
+//      with no image eating into flex space.  This is the key fix — previously
+//      ic-active (flex-direction:row) was added here, causing the loaded image
+//      to steal ~46 % of the narrow card width and the text to crunch into
+//      ~140 px, which made the reflow look like a glitch.
+//   4. Double-rAF: release both inline overrides simultaneously.
+//      • transform: translateX(startLeft px) → translateX(0%)  [0.45 s, ease-out]
+//        Card slides to the left edge first.
+//      • width: startW → gridW  [0.80 s, ease, 0.05 s delay]
+//        Card grows to full width.  "GOD MODE" / "THE ARK" reflow from stacked
+//        lines to a single inline line mid-animation — the words visibly come
+//        together as the card widens.
+//   5. After 900 ms: remove ic-expanding, add ic-active (row layout + image slot),
+//      then fade in image + meta via ic-reveal after 180 ms more.
 //
-// Closing: image/meta fade out, then all cards fade+flip back in together.
+// Closing: image/meta fade out, then all cards flip back in together.
 (function initIncarnations() {
   const cards = Array.from(document.querySelectorAll('.incarnation-card'));
   if (!cards.length) return;
@@ -290,18 +294,17 @@ setInterval(() => {
   const grid = document.querySelector('.incarnations-grid');
 
   let active = null;
-  let t1 = null, t2 = null;
+  let t1 = null, t2 = null, t3 = null;
 
   function expand(card) {
     if (active) return;
     active = card;
     const idx = cards.indexOf(card);
 
-    // Measure BEFORE any DOM changes — dormant flip doesn't affect layout
-    // (it's a CSS transform, not display:none yet) so these values are accurate.
+    // Measure NOW — dormant CSS transform (rotateY) doesn't affect layout dimensions.
     const cardRect = card.getBoundingClientRect();
     const gridRect = grid ? grid.getBoundingClientRect() : cardRect;
-    const startLeft = cardRect.left - gridRect.left; // px from grid's left edge
+    const startLeft = cardRect.left - gridRect.left; // px offset from grid left
     const startW    = cardRect.width;                // ~1/3 grid width
     const gridW     = gridRect.width;                // full grid width
 
@@ -309,32 +312,31 @@ setInterval(() => {
     cards.forEach((c, i) => { if (i !== idx) c.classList.add('ic-dormant'); });
 
     t1 = setTimeout(() => {
-      // Hide dormant from layout (visually already gone)
+      // Dormant cards are visually gone — remove from layout
       cards.forEach(c => { if (c !== card) c.style.display = 'none'; });
 
-      // Pin active card at its original visual position and width.
-      // After display:none the card auto-places to column 1 (left=0),
-      // so startLeft offset is needed to restore the visual origin.
+      // Pin at original visual position/width (card auto-placed to col 1 after display:none)
       card.style.width     = `${startW}px`;
       card.style.transform = `translateX(${startLeft}px)`;
 
-      // Apply expanded layout — grid-column:1/-1 + flex-direction:row.
-      // The inline width above prevents it from snapping to full-row width.
-      card.classList.add('ic-active');
+      // ic-expanding: grid-column:1/-1 + flex-direction stays column + no image
+      card.classList.add('ic-expanding');
 
-      // Double-rAF: browser commits the pinned state, then we release both
-      // overrides so their CSS transitions fire simultaneously.
+      // Double-rAF: commit the pinned state, then release both overrides
       requestAnimationFrame(() => requestAnimationFrame(() => {
-        card.style.transform = '';            // → CSS .ic-active: translateX(0%)
-        card.style.width     = `${gridW}px`; // → animates startW → gridW
-        // Text (e.g. "GOD MODE") reflows from stacked to inline as width grows.
+        card.style.transform = '';            // → .ic-expanding: translateX(0%)
+        card.style.width     = `${gridW}px`; // → width transition: startW → gridW
+        // Heading text reflows from stacked to inline as card grows.
       }));
 
-      // After both transitions have landed, clean up and reveal image + meta
+      // slide: 0.45 s  |  width: 0.05 s delay + 0.80 s = 0.85 s total
+      // Wait 900 ms for both to land, then switch to row layout + reveal.
       t2 = setTimeout(() => {
-        card.style.width = '';            // remove inline — natural full width
-        card.classList.add('ic-reveal');
-      }, 510);
+        card.style.width = '';              // already at gridW — natural width
+        card.classList.remove('ic-expanding');
+        card.classList.add('ic-active');    // flex-direction:row, image enters layout
+        t3 = setTimeout(() => card.classList.add('ic-reveal'), 180);
+      }, 900);
     }, 420);
   }
 
@@ -343,15 +345,14 @@ setInterval(() => {
     const card = active;
     clearTimeout(t1);
     clearTimeout(t2);
+    clearTimeout(t3);
 
-    // Fade out expanded content; clear any lingering inline width immediately
     card.classList.remove('ic-reveal');
     card.style.width = '';
 
     t1 = setTimeout(() => {
-      // Fade all cards out together so the layout reset is seamless
       cards.forEach(c => c.classList.add('ic-dormant'));
-      card.classList.remove('ic-active');
+      card.classList.remove('ic-active', 'ic-expanding');
       cards.forEach(c => { c.style.display = ''; });
 
       requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -361,15 +362,15 @@ setInterval(() => {
     }, 380);
   }
 
-  // Desktop: full slide + width animation.  Mobile (≤768 px): simple accordion.
+  // Desktop: full animation.  Mobile (≤768 px): simple accordion.
   cards.forEach(card => {
     card.addEventListener('click', () => {
       if (window.innerWidth <= 768) {
         if (card === active) {
-          card.classList.remove('ic-active', 'ic-reveal');
+          card.classList.remove('ic-active', 'ic-expanding', 'ic-reveal');
           active = null;
         } else {
-          if (active) { active.classList.remove('ic-active', 'ic-reveal'); }
+          if (active) { active.classList.remove('ic-active', 'ic-expanding', 'ic-reveal'); }
           active = card;
           card.classList.add('ic-active');
           requestAnimationFrame(() => card.classList.add('ic-reveal'));

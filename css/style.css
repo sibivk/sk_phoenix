@@ -823,9 +823,9 @@ body:has(button:hover) .cursor {
   flex-direction: column;
   border-right: 1px solid rgba(255,255,255,0.07);
   cursor: pointer;
-  transition: transform 0.48s cubic-bezier(0.4, 0, 0.2, 1),
+  transition: transform 0.45s cubic-bezier(0.0, 0.0, 0.2, 1),
               opacity  0.42s ease,
-              width    0.48s cubic-bezier(0.4, 0, 0.2, 1);
+              width    0.80s ease 0.05s;
 }
 
 .incarnation-card:last-child {
@@ -998,13 +998,28 @@ body:has(button:hover) .cursor {
   pointer-events: none;
 }
 
-/* ── Active / expanded card ────────────────────────────────────────────────
-   grid-column:1/-1 claims the full row (dormant cards are display:none).
-   translateX(0%) is the TARGET; JS sets an inline translateX(startPct%)
-   first so the card appears at its original position, then removes the
-   inline override — the browser interpolates translateX(startPct%)→translateX(0%)
-   using the existing card transition (transform 0.45s).  Pure GPU composite.
+/* ── Expanding card — animation phase ──────────────────────────────────────
+   Claims the full grid row but keeps flex-direction:column and hides the
+   image (.ic-img stays display:none here).  The card's inline width is
+   pinned at startW then animated to gridW by JS, so the heading text fills
+   the full card width the entire time and reflows naturally — two stacked
+   lines becoming one inline line — as the card grows.  No image in layout
+   means no competing flex shrink that would prevent the text from wrapping.
    ─────────────────────────────────────────────────────────────────────── */
+.incarnation-card.ic-expanding {
+  grid-column: 1 / -1;
+  cursor: default;
+  border-right: none;
+  transform: translateX(0%); /* target for the slide transition */
+}
+
+/* suppress hover effects during expansion */
+.incarnation-card.ic-expanding::before,
+.incarnation-card.ic-expanding:hover::before { opacity: 0 !important; }
+.incarnation-card.ic-expanding .incarnation-rule,
+.incarnation-card.ic-expanding:hover .incarnation-rule { transform: none !important; }
+
+/* ── Active / fully expanded card (row layout, image visible) ── */
 .incarnation-card.ic-active {
   grid-column: 1 / -1;
   flex-direction: row;

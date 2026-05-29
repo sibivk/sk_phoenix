@@ -996,7 +996,7 @@ body:has(button:hover) .cursor {
 }
 
 /* Hidden until card is expanded */
-.ic-img,
+.ic-img-wrap,
 .ic-meta { display: none; }
 
 /* ── Dormant card — flip out ── */
@@ -1056,32 +1056,48 @@ body:has(button:hover) .cursor {
 /* hide watermark in expanded view */
 .incarnation-card.ic-active .incarnation-bg-name { display: none; }
 
-/* image — right column, fades in via ic-reveal.
-   Halo approach: mask-image fades edges into the dark background (GPU
-   composited, painted once — zero per-frame cost); box-shadow provides the
-   outer luminous ring behind the image (also static, painted once). */
-.incarnation-card.ic-active .ic-img {
+/* image wrapper — right column; controls flex placement and fade-in.
+   The ::after vignette overlay paints #000 from the edges inward, covering
+   bright image content regardless of what the photo contains.  This is more
+   robust than mask-image, which only creates transparency but cannot darken
+   bright pixels that still fall inside the opaque zone.
+   Both the gradient and the box-shadow are static — painted once on reveal,
+   zero per-frame GPU cost. */
+.incarnation-card.ic-active .ic-img-wrap {
   display: block;
+  position: relative;
   flex: 0 0 auto;
   align-self: flex-start;
-  max-height: 280px;
   max-width: 46%;
-  width: auto;
-  height: auto;
-  border: none; /* soft mask replaces hard border */
   opacity: 0;
   transition: opacity 0.38s ease;
-  /* Fade edges — ellipse slightly taller than wide, focal point at 44%
-     so portrait subjects near the top don't get clipped */
-  -webkit-mask-image: radial-gradient(
-    ellipse 88% 90% at 50% 44%,
-    black 36%, rgba(0,0,0,0.55) 62%, transparent 100%
+}
+
+/* Dark vignette — radial gradient from transparent center to solid black
+   at the perimeter.  Focal point at 50% 46% keeps subjects centred. */
+.incarnation-card.ic-active .ic-img-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 72% 78% at 50% 46%,
+    transparent 24%,
+    rgba(0,0,0,0.40) 46%,
+    rgba(0,0,0,0.86) 70%,
+    #000 100%
   );
-  mask-image: radial-gradient(
-    ellipse 88% 90% at 50% 44%,
-    black 36%, rgba(0,0,0,0.55) 62%, transparent 100%
-  );
-  /* Outer luminous halo — two layers: bright tight ring + diffuse bloom */
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* image itself — fills the wrapper; box-shadow produces the outer halo ring */
+.incarnation-card.ic-active .ic-img {
+  display: block;
+  max-height: 280px;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  /* Outer luminous halo — tight bright ring + diffuse bloom */
   box-shadow:
     0 0 32px  9px rgba(255,255,255,0.055),
     0 0 72px 26px rgba(255,255,255,0.022);
@@ -1099,9 +1115,9 @@ body:has(button:hover) .cursor {
   transition: opacity 0.38s ease 0.1s;
 }
 
-/* reveal image + meta */
-.incarnation-card.ic-reveal .ic-img  { opacity: 1; }
-.incarnation-card.ic-reveal .ic-meta { opacity: 1; }
+/* reveal image wrapper + meta */
+.incarnation-card.ic-reveal .ic-img-wrap { opacity: 1; }
+.incarnation-card.ic-reveal .ic-meta     { opacity: 1; }
 
 /* meta line typography */
 .ic-meta-line {
@@ -1122,19 +1138,12 @@ body:has(button:hover) .cursor {
     grid-column: auto;
     transform: none;
   }
-  .incarnation-card.ic-active .ic-img {
-    max-width: 100%;
-    max-height: 200px;
+  .incarnation-card.ic-active .ic-img-wrap {
+    max-width: 100%; /* full width in stacked layout */
     align-self: flex-start;
-    /* Wider mask on mobile — full-width image needs broader ellipse */
-    -webkit-mask-image: radial-gradient(
-      ellipse 92% 88% at 50% 44%,
-      black 36%, rgba(0,0,0,0.55) 62%, transparent 100%
-    );
-    mask-image: radial-gradient(
-      ellipse 92% 88% at 50% 44%,
-      black 36%, rgba(0,0,0,0.55) 62%, transparent 100%
-    );
+  }
+  .incarnation-card.ic-active .ic-img {
+    max-height: 200px;
   }
   .incarnation-card.ic-active .ic-meta { margin-top: 1rem; }
 }

@@ -1036,6 +1036,7 @@ body:has(button:hover) .cursor {
   cursor: default;
   border-right: none;
   transform: translateX(0%);
+  overflow: visible; /* allow image halo to bleed beyond card padding */
 }
 
 /* suppress hover effects inside expanded card */
@@ -1055,7 +1056,10 @@ body:has(button:hover) .cursor {
 /* hide watermark in expanded view */
 .incarnation-card.ic-active .incarnation-bg-name { display: none; }
 
-/* image — right column, fades in via ic-reveal */
+/* image — right column, fades in via ic-reveal.
+   Halo approach: mask-image fades edges into the dark background (GPU
+   composited, painted once — zero per-frame cost); box-shadow provides the
+   outer luminous ring behind the image (also static, painted once). */
 .incarnation-card.ic-active .ic-img {
   display: block;
   flex: 0 0 auto;
@@ -1064,9 +1068,23 @@ body:has(button:hover) .cursor {
   max-width: 46%;
   width: auto;
   height: auto;
-  border: 1px solid rgba(255,255,255,0.07);
+  border: none; /* soft mask replaces hard border */
   opacity: 0;
   transition: opacity 0.38s ease;
+  /* Fade edges — ellipse slightly taller than wide, focal point at 44%
+     so portrait subjects near the top don't get clipped */
+  -webkit-mask-image: radial-gradient(
+    ellipse 88% 90% at 50% 44%,
+    black 36%, rgba(0,0,0,0.55) 62%, transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 88% 90% at 50% 44%,
+    black 36%, rgba(0,0,0,0.55) 62%, transparent 100%
+  );
+  /* Outer luminous halo — two layers: bright tight ring + diffuse bloom */
+  box-shadow:
+    0 0 32px  9px rgba(255,255,255,0.055),
+    0 0 72px 26px rgba(255,255,255,0.022);
 }
 
 /* meta — column list right under description, inside .ic-text */
@@ -1108,6 +1126,15 @@ body:has(button:hover) .cursor {
     max-width: 100%;
     max-height: 200px;
     align-self: flex-start;
+    /* Wider mask on mobile — full-width image needs broader ellipse */
+    -webkit-mask-image: radial-gradient(
+      ellipse 92% 88% at 50% 44%,
+      black 36%, rgba(0,0,0,0.55) 62%, transparent 100%
+    );
+    mask-image: radial-gradient(
+      ellipse 92% 88% at 50% 44%,
+      black 36%, rgba(0,0,0,0.55) 62%, transparent 100%
+    );
   }
   .incarnation-card.ic-active .ic-meta { margin-top: 1rem; }
 }

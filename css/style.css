@@ -1070,7 +1070,10 @@ body:has(button:hover) .cursor {
   align-self: flex-start;
   max-width: 46%;
   opacity: 0;
-  transition: opacity 0.38s ease;
+  /* Start at a steeper angle; settles to resting tilt as ic-reveal fades in */
+  transform: perspective(700px) rotateY(-24deg);
+  transition: opacity 0.45s ease,
+              transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Dark vignette — radial gradient from transparent center to solid black
@@ -1115,9 +1118,12 @@ body:has(button:hover) .cursor {
   transition: opacity 0.38s ease 0.1s;
 }
 
-/* reveal image wrapper + meta */
-.incarnation-card.ic-reveal .ic-img-wrap { opacity: 1; }
-.incarnation-card.ic-reveal .ic-meta     { opacity: 1; }
+/* reveal: fade in + settle to resting tilt angle */
+.incarnation-card.ic-reveal .ic-img-wrap {
+  opacity: 1;
+  transform: perspective(700px) rotateY(-16deg);
+}
+.incarnation-card.ic-reveal .ic-meta { opacity: 1; }
 
 /* meta line typography */
 .ic-meta-line {
@@ -1138,9 +1144,13 @@ body:has(button:hover) .cursor {
     grid-column: auto;
     transform: none;
   }
-  .incarnation-card.ic-active .ic-img-wrap {
+  .incarnation-card.ic-active .ic-img-wrap,
+  .incarnation-card.ic-reveal .ic-img-wrap {
     max-width: 100%; /* full width in stacked layout */
     align-self: flex-start;
+    /* Shallower tilt on mobile; static (no settle animation) */
+    transform: perspective(500px) rotateY(-10deg);
+    transition: opacity 0.45s ease;
   }
   .incarnation-card.ic-active .ic-img {
     max-height: 200px;

@@ -887,6 +887,14 @@ body:has(button:hover) .cursor {
   to   { transform: translateX(100%);  }
 }
 
+/* Slow 3D Y-axis spin for the expanded card image.
+   Slight X tilt (6 deg) adds depth so the edge-on moment feels natural.
+   Pure rotateY — GPU composited, zero layout/paint per frame. */
+@keyframes icImgSpin {
+  from { transform: rotateX(6deg) rotateY(0deg);    }
+  to   { transform: rotateX(6deg) rotateY(-360deg); }
+}
+
 /* ── Content layers sit above the ::before glow ── */
 .incarnation-card > * { position: relative; z-index: 1; }
 
@@ -1070,10 +1078,9 @@ body:has(button:hover) .cursor {
   align-self: flex-start;
   max-width: 46%;
   opacity: 0;
-  /* Start at a steeper angle; settles to resting tilt as ic-reveal fades in */
-  transform: perspective(700px) rotateY(-24deg);
-  transition: opacity 0.45s ease,
-              transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  perspective: 800px;          /* 3D context shared by the spinning image */
+  transform-style: preserve-3d;
+  transition: opacity 0.45s ease;
 }
 
 /* Dark vignette — radial gradient from transparent center to solid black
@@ -1093,13 +1100,17 @@ body:has(button:hover) .cursor {
   z-index: 1;
 }
 
-/* image itself — fills the wrapper; box-shadow produces the outer halo ring */
+/* image itself — fills the wrapper; spins in 3D; box-shadow halo */
 .incarnation-card.ic-active .ic-img {
   display: block;
   max-height: 280px;
   max-width: 100%;
   width: auto;
   height: auto;
+  backface-visibility: hidden;   /* clean disappear at edge-on moment */
+  will-change: transform;        /* promote layer before first frame */
+  animation: icImgSpin 14s linear infinite;
+  animation-play-state: paused;  /* start only when ic-reveal fires */
   /* Outer luminous halo — tight bright ring + diffuse bloom */
   box-shadow:
     0 0 32px  9px rgba(255,255,255,0.055),
@@ -1118,12 +1129,10 @@ body:has(button:hover) .cursor {
   transition: opacity 0.38s ease 0.1s;
 }
 
-/* reveal: fade in + settle to resting tilt angle */
-.incarnation-card.ic-reveal .ic-img-wrap {
-  opacity: 1;
-  transform: perspective(700px) rotateY(-16deg);
-}
-.incarnation-card.ic-reveal .ic-meta { opacity: 1; }
+/* reveal: fade in + start spin */
+.incarnation-card.ic-reveal .ic-img-wrap { opacity: 1; }
+.incarnation-card.ic-reveal .ic-img      { animation-play-state: running; }
+.incarnation-card.ic-reveal .ic-meta     { opacity: 1; }
 
 /* meta line typography */
 .ic-meta-line {
@@ -1144,13 +1153,10 @@ body:has(button:hover) .cursor {
     grid-column: auto;
     transform: none;
   }
-  .incarnation-card.ic-active .ic-img-wrap,
-  .incarnation-card.ic-reveal .ic-img-wrap {
-    max-width: 100%; /* full width in stacked layout */
+  .incarnation-card.ic-active .ic-img-wrap {
+    max-width: 100%;
     align-self: flex-start;
-    /* Shallower tilt on mobile; static (no settle animation) */
-    transform: perspective(500px) rotateY(-10deg);
-    transition: opacity 0.45s ease;
+    perspective: 500px; /* shallower depth on mobile */
   }
   .incarnation-card.ic-active .ic-img {
     max-height: 200px;
@@ -1245,7 +1251,8 @@ body:has(button:hover) .cursor {
 /* Tab hidden — pause everything */
 .tab-hidden .glow-letter,
 .tab-hidden .glow-word,
-.tab-hidden .scroll-line::after {
+.tab-hidden .scroll-line::after,
+.tab-hidden .ic-img {
   animation-play-state: paused;
 }
 
@@ -1255,7 +1262,8 @@ body:has(button:hover) .cursor {
    on/off, which leaves a ~20 s main-thread backlog after navigation. */
 body.nav-scrolling .glow-letter,
 body.nav-scrolling .glow-word,
-body.nav-scrolling .scroll-line::after {
+body.nav-scrolling .scroll-line::after,
+body.nav-scrolling .ic-img {
   animation-play-state: paused;
 }
 
@@ -1266,7 +1274,8 @@ body.nav-scrolling .scroll-line::after {
 .section-capabilities.glow-paused .glow-letter,
 .section-focus.glow-paused .glow-letter,
 .section-philosophy.glow-paused .glow-word,
-.section-incarnations.glow-paused .glow-letter {
+.section-incarnations.glow-paused .glow-letter,
+.section-incarnations.glow-paused .ic-img {
   animation-play-state: paused !important;
 }
 

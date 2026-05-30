@@ -1107,7 +1107,7 @@ body:has(button:hover) .cursor {
   max-width: 100%;
   width: auto;
   height: auto;
-  backface-visibility: hidden;   /* clean disappear at edge-on moment */
+  backface-visibility: visible;  /* show mirrored image on back face */
   will-change: transform;        /* promote layer before first frame */
   animation: icImgSpin 14s linear infinite;
   animation-play-state: paused;  /* start only when ic-reveal fires */

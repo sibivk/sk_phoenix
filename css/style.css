@@ -272,6 +272,33 @@ body:has(button:hover) .cursor {
   opacity: 0;
   transform: translateY(50px);
   animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0.2s) forwards;
+
+  /* ── Outlined-to-filled effect ─────────────────────────────────────────
+     Initial state: white stroke outline, transparent fill.
+     After the ink-drop period settles, JS adds .name-filled to .hero-name,
+     which slides the background-position so white covers the text.
+     background-size: 200% — gradient is twice the element width.
+       position 100% → shows the transparent right-half  (empty letters)
+       position   0% → shows the white     left-half     (solid letters)
+     Transition is a smooth left-to-right wipe at 1.8 s.               */
+  -webkit-text-stroke: 2.5px rgba(255,255,255,0.80);
+  background: linear-gradient(90deg, #fff 50%, transparent 50%);
+  background-size: 200% 100%;
+  background-position: 100% 0;         /* start: transparent */
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: background-position 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Fill triggered by JS — slides gradient to reveal solid white */
+.hero-name.name-filled .hero-name-line {
+  background-position: 0% 0;
+}
+
+/* Second line fills 0.2 s after the first for a cascade wipe */
+.hero-name.name-filled .hero-name-line.dh-2 {
+  transition-delay: 0.20s;
 }
 
 .hero-rule {

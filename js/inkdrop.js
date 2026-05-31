@@ -1,6 +1,8 @@
 // Ink Ball Animation
 // A ball drops with gravity, bounces on the KAITHARATH baseline with
 // decreasing energy, and settles as a period dot at the end of the word.
+// The ball uses a white-stroke / black-fill style to match the outlined
+// hero text.  Once the period is placed, the text and dot fill white together.
 
 function runInkDrop() {
   const hero = document.getElementById('hero');
@@ -65,6 +67,7 @@ function runInkDrop() {
   function easeIn(t)    { return t * t * t; }
   function clamp(v,a,b) { return Math.max(a, Math.min(b, v)); }
 
+  // Black fill + white stroke — matches the outlined text state before fill.
   function drawBall(x, y, r, sq, alpha) {
     if (alpha <= 0) return;
     ctx.save();
@@ -74,8 +77,11 @@ function runInkDrop() {
     ctx.scale(1 + sq * 0.45, 1 - sq * 0.30);
     ctx.beginPath();
     ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.fillStyle = '#000';
     ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.88)';
+    ctx.lineWidth = Math.max(1.5, r * 0.13);
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -133,6 +139,8 @@ function runInkDrop() {
         // We draw one final frame so there's no flicker during the swap.
         drawBall(posX, floorY - PERIOD_R, PERIOD_R, 0, 1);
 
+        // CSS dot starts outlined (black fill, white border) to match the text,
+        // then fills white via CSS transition in sync with the text fill wipe.
         const dot = document.createElement('div');
         dot.style.cssText = [
           'position:absolute',
@@ -141,15 +149,27 @@ function runInkDrop() {
           `width:${PERIOD_R * 2}px`,
           `height:${PERIOD_R * 2}px`,
           'border-radius:50%',
-          'background:rgba(255,255,255,0.95)',
+          'background:#000',
+          'border:1.5px solid rgba(255,255,255,0.88)',
+          'box-sizing:border-box',
           'pointer-events:none',
           'z-index:10',
+          'transition:background 1.2s cubic-bezier(0.16,1,0.3,1) 0.3s,' +
+            'border-color 1.2s cubic-bezier(0.16,1,0.3,1) 0.3s',
         ].join(';');
         hero.appendChild(dot);
         cvs.remove(); // release GPU texture — no further rAF needed
 
-        // Cascade the halo glow on S, V, K — CSS handles the animation
+        // Trigger: glow letters + hero text fill + dot fill — all in one frame
         document.querySelectorAll('.glow-letter').forEach(el => el.classList.add('glow-active'));
+        const heroName = document.querySelector('.hero-name');
+        if (heroName) heroName.classList.add('name-filled');
+
+        // Dot transitions from outlined → filled white (rAF ensures transition fires)
+        requestAnimationFrame(() => {
+          dot.style.background = 'rgba(255,255,255,0.95)';
+          dot.style.borderColor = 'rgba(255,255,255,0.95)';
+        });
       }
     }
   }

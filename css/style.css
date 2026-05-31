@@ -937,6 +937,28 @@ body:has(button:hover) .cursor {
   to   { transform: translateX(100%);  }
 }
 
+/* ── Meta-line glitch reveal ────────────────────────────────────────────
+   Each [ SYSTEM: ... ] line flickers in with chromatic aberration,
+   horizontal jitter, and clip-path tearing.  All properties are
+   GPU-composited (transform, opacity, clip-path) — zero layout/paint.   */
+@keyframes metaLineGlitch {
+  0%   { opacity: 0;    transform: translateX(0);    clip-path: inset(0);          }
+  5%   { opacity: 0.75; transform: translateX(-8px); clip-path: inset(6% 0 56% 0);
+         text-shadow: -3px 0 rgba(255,60,60,0.8), 3px 0 rgba(0,220,255,0.8);      }
+  10%  { opacity: 0;    transform: translateX(10px); clip-path: inset(0 0 100% 0); }
+  16%  { opacity: 0.85; transform: translateX(-5px); clip-path: inset(44% 0 16% 0);
+         text-shadow:  3px 0 rgba(255,60,60,0.6), -3px 0 rgba(0,220,255,0.6);     }
+  22%  { opacity: 0.3;  transform: translateX(7px);  clip-path: inset(0 0 68% 0);  }
+  28%  { opacity: 1;    transform: translateX(-3px); clip-path: inset(2% 0 2% 0);
+         text-shadow: -2px 0 rgba(255,60,60,0.35), 2px 0 rgba(0,220,255,0.35);    }
+  36%  { opacity: 0.88; transform: translateX(4px);  clip-path: inset(0);          }
+  46%  { opacity: 1;    transform: translateX(-1px); clip-path: inset(0);
+         text-shadow: none;                                                         }
+  62%  { opacity: 1;    transform: translateX(0.5px);                               }
+  100% { opacity: 1;    transform: translateX(0);    clip-path: inset(0);
+         text-shadow: none;                                                         }
+}
+
 /* Slow 3D Y-axis spin for the expanded card image.
    Slight X tilt (6 deg) adds depth so the edge-on moment feels natural.
    Pure rotateY — GPU composited, zero layout/paint per frame. */
@@ -1193,6 +1215,32 @@ body:has(button:hover) .cursor {
   color: rgba(255,255,255,0.36);
   text-transform: uppercase;
   line-height: 2;
+}
+
+/* Lines hidden until glitch fires (parent .ic-meta handles container fade) */
+.incarnation-card.ic-active .ic-meta-line { opacity: 0; }
+
+/* Glitch in after meta container has faded — staggered cascade */
+.incarnation-card.ic-reveal .ic-meta-line {
+  animation: metaLineGlitch 0.78s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.incarnation-card.ic-reveal .ic-meta-line:nth-child(1) { animation-delay: 0.50s; }
+.incarnation-card.ic-reveal .ic-meta-line:nth-child(2) { animation-delay: 0.66s; }
+.incarnation-card.ic-reveal .ic-meta-line:nth-child(3) { animation-delay: 0.82s; }
+.incarnation-card.ic-reveal .ic-meta-line:nth-child(4) { animation-delay: 0.98s; }
+
+/* Pause when tab loses focus or section scrolls out of view */
+.tab-hidden .ic-meta-line,
+.section-incarnations.glow-paused .ic-meta-line {
+  animation-play-state: paused;
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .incarnation-card.ic-reveal .ic-meta-line {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /* ── Mobile: stacked cards — no grid-column change, simple fade in ── */

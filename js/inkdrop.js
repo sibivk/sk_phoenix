@@ -161,7 +161,7 @@ function runInkDrop() {
         hero.appendChild(dot);
         cvs.remove(); // release GPU texture — no further rAF needed
 
-        // Trigger: glow letters + hero text fill + dot fill — all in one frame
+        // Trigger: glow letters + hero text diagonal fill + dot fill — all in one frame
         document.querySelectorAll('.glow-letter').forEach(el => el.classList.add('glow-active'));
         const heroName = document.querySelector('.hero-name');
         if (heroName) heroName.classList.add('name-filled');
@@ -171,6 +171,16 @@ function runInkDrop() {
           dot.style.background = 'rgba(255,255,255,0.95)';
           dot.style.borderColor = 'rgba(255,255,255,0.95)';
         });
+
+        // After the fill transition finishes (~2.5 s), strip background-attachment:fixed
+        // from each hero-name-line to eliminate scroll repaints going forward.
+        setTimeout(() => {
+          if (heroName) {
+            heroName.querySelectorAll('.hero-name-line').forEach(line => {
+              line.classList.add('fill-complete');
+            });
+          }
+        }, 2500);
       }
     }
   }

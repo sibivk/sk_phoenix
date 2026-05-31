@@ -277,37 +277,41 @@ body:has(button:hover) .cursor {
      Initial state: white stroke outline, transparent fill.
      After the ink-drop period settles, JS adds .name-filled to .hero-name.
 
-     Gradient direction: right-to-left (white on right, transparent on left).
-     background-size: 200% — gradient is twice the element width.
-       position   0% → shows the left-half  (transparent) = outlined
-       position 100% → shows the right-half (white)       = filled
+     135° diagonal gradient (top-left = white, bottom-right = transparent).
+     background-size: 300% 300% — large enough to cover the full combined
+       height of both lines in one sweep.
+     background-attachment: fixed — both lines share the VIEWPORT coordinate
+       space, so the gradient reads as one continuous image across SIBI V.
+       and KAITHARATH. No per-line stagger needed.
 
-     KAITHARATH fills immediately (period lands there).
-     SIBI V. fills 0.65 s later — combined sweep reads bottom-right → top-left,
-     starting at the period and ending at S.                               */
+     Transition: position 100% 100% (bottom-right = transparent = outlined)
+               → position   0%   0% (top-left    = white     = filled)
+     The gradient edge sweeps diagonally from BOTTOM-RIGHT (period / end of
+     KAITHARATH) to TOP-LEFT (S in SIBI) — exactly one combined image.     */
   -webkit-text-stroke: 2.5px rgba(255,255,255,0.80);
-  background: linear-gradient(to left, #fff 50%, transparent 50%);
-  background-size: 200% 100%;
-  background-position: 0% 0;           /* start: transparent */
+  background: linear-gradient(135deg, #fff 50%, transparent 50%);
+  background-size: 300% 300%;
+  background-attachment: fixed;
+  background-position: 100% 100%;      /* start: shows bottom-right = transparent */
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  transition: background-position 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-position 2.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Fill triggered by JS — slides gradient right-to-left */
+/* Fill triggered by JS — diagonal sweep bottom-right → top-left */
 .hero-name.name-filled .hero-name-line {
-  background-position: 100% 0;
+  background-position: 0% 0%;
 }
 
-/* KAITHARATH (dh-2, bottom): no delay — fills first, near the period */
-.hero-name.name-filled .hero-name-line.dh-2 {
-  transition-delay: 0s;
-}
-
-/* SIBI V. (dh-1, top): fills 0.65 s later — sweep reads bottom-right → top-left */
-.hero-name.name-filled .hero-name-line.dh-1 {
-  transition-delay: 0.65s;
+/* After fill completes, strip the background-attachment:fixed to prevent
+   scroll repaints. fill-complete is added by JS ~2.5 s after name-filled. */
+.hero-name-line.fill-complete {
+  -webkit-text-fill-color: #fff;
+  -webkit-text-stroke: 0;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
 }
 
 .hero-rule {

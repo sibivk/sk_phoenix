@@ -942,21 +942,29 @@ body:has(button:hover) .cursor {
    horizontal jitter, and clip-path tearing.  All properties are
    GPU-composited (transform, opacity, clip-path) — zero layout/paint.   */
 @keyframes metaLineGlitch {
-  0%   { opacity: 0;    transform: translateX(0);    clip-path: inset(0);          }
-  5%   { opacity: 0.75; transform: translateX(-8px); clip-path: inset(6% 0 56% 0);
-         text-shadow: -3px 0 rgba(255,60,60,0.8), 3px 0 rgba(0,220,255,0.8);      }
-  10%  { opacity: 0;    transform: translateX(10px); clip-path: inset(0 0 100% 0); }
-  16%  { opacity: 0.85; transform: translateX(-5px); clip-path: inset(44% 0 16% 0);
-         text-shadow:  3px 0 rgba(255,60,60,0.6), -3px 0 rgba(0,220,255,0.6);     }
-  22%  { opacity: 0.3;  transform: translateX(7px);  clip-path: inset(0 0 68% 0);  }
-  28%  { opacity: 1;    transform: translateX(-3px); clip-path: inset(2% 0 2% 0);
-         text-shadow: -2px 0 rgba(255,60,60,0.35), 2px 0 rgba(0,220,255,0.35);    }
-  36%  { opacity: 0.88; transform: translateX(4px);  clip-path: inset(0);          }
-  46%  { opacity: 1;    transform: translateX(-1px); clip-path: inset(0);
-         text-shadow: none;                                                         }
-  62%  { opacity: 1;    transform: translateX(0.5px);                               }
-  100% { opacity: 1;    transform: translateX(0);    clip-path: inset(0);
-         text-shadow: none;                                                         }
+  /* Hidden start */
+  0%   { opacity: 0;   transform: translateX(0);     color: rgba(255,255,255,0.36); }
+  /* Flash 1 — hard left, near-white so it's unmistakably bright */
+  6%   { opacity: 1;   transform: translateX(-14px); color: rgba(255,255,255,0.95);
+         text-shadow: -4px 0 rgba(255,60,60,0.9), 4px 0 rgba(0,220,255,0.9); }
+  /* Snap off */
+  11%  { opacity: 0;   transform: translateX(18px);  color: rgba(255,255,255,0.36); }
+  /* Flash 2 — hard right, bright */
+  17%  { opacity: 1;   transform: translateX(11px);  color: rgba(255,255,255,0.88);
+         text-shadow: 4px 0 rgba(255,60,60,0.7), -4px 0 rgba(0,220,255,0.7); }
+  /* Flicker */
+  22%  { opacity: 0.2; transform: translateX(-9px);  color: rgba(255,255,255,0.36); }
+  /* Flash 3 — near centre, bright again */
+  28%  { opacity: 1;   transform: translateX(-5px);  color: rgba(255,255,255,0.82);
+         text-shadow: -2px 0 rgba(255,60,60,0.5), 2px 0 rgba(0,220,255,0.5); }
+  /* Settle with residual jitter */
+  36%  { opacity: 1;   transform: translateX(6px);   color: rgba(255,255,255,0.60); text-shadow: none; }
+  44%  { opacity: 1;   transform: translateX(-3px);  color: rgba(255,255,255,0.50); }
+  54%  { opacity: 1;   transform: translateX(1.5px); color: rgba(255,255,255,0.42); }
+  68%  { opacity: 1;   transform: translateX(-0.5px);color: rgba(255,255,255,0.38); }
+  /* Final rest position */
+  100% { opacity: 1;   transform: translateX(0);     color: rgba(255,255,255,0.36);
+         text-shadow: none; }
 }
 
 /* Slow 3D Y-axis spin for the expanded card image.
@@ -1235,11 +1243,10 @@ body:has(button:hover) .cursor {
   animation-play-state: paused;
 }
 
-/* Respect reduced-motion preference */
+/* reduced-motion: keep the glitch but remove jitter transform */
 @media (prefers-reduced-motion: reduce) {
   .incarnation-card.ic-reveal .ic-meta-line {
-    animation: none;
-    opacity: 1;
+    animation: metaLineGlitch 0.78s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 }
 

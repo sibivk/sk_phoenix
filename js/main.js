@@ -362,6 +362,9 @@ document.querySelectorAll('.nav-links a, .footer-nav a').forEach(link => {
         words.forEach(w => { w.style.transition = ''; w.style.transform = ''; });
         card.classList.remove('ic-expanding');
         card.classList.add('ic-active');
+        // Scroll the fully-expanded card to the centre of the viewport so the
+        // user always sees the image + meta appear in focus, not below the fold.
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         t3 = setTimeout(() => card.classList.add('ic-reveal'), 180);
       }, 620);
     }, 420);

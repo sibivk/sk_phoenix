@@ -154,8 +154,9 @@ function runInkDrop() {
           'box-sizing:border-box',
           'pointer-events:none',
           'z-index:10',
-          'transition:background 1.2s cubic-bezier(0.16,1,0.3,1) 0.3s,' +
-            'border-color 1.2s cubic-bezier(0.16,1,0.3,1) 0.3s',
+          // Dot fills slightly ahead of KAITHARATH to lead the sweep from the period
+          'transition:background 0.9s cubic-bezier(0.16,1,0.3,1) 0s,' +
+            'border-color 0.9s cubic-bezier(0.16,1,0.3,1) 0s',
         ].join(';');
         hero.appendChild(dot);
         cvs.remove(); // release GPU texture — no further rAF needed

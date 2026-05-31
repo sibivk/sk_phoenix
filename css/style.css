@@ -289,19 +289,23 @@ body:has(button:hover) .cursor {
      The gradient edge sweeps diagonally from BOTTOM-RIGHT (period / end of
      KAITHARATH) to TOP-LEFT (S in SIBI) — exactly one combined image.     */
   -webkit-text-stroke: 2.5px rgba(255,255,255,0.80);
-  background: linear-gradient(135deg, #fff 50%, transparent 50%);
+  /* transparent on top-left, white on bottom-right.
+     position 0% 0%   → element sees top-left area   = transparent (outlined)
+     position 100% 100% → element sees bottom-right  = white (filled)
+     Sweep: gradient edge enters from BOTTOM-RIGHT (period), exits TOP-LEFT (S). */
+  background: linear-gradient(135deg, transparent 50%, #fff 50%);
   background-size: 300% 300%;
   background-attachment: fixed;
-  background-position: 100% 100%;      /* start: shows bottom-right = transparent */
+  background-position: 0% 0%;          /* start: shows top-left = transparent */
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  transition: background-position 2.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-position 3.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Fill triggered by JS — diagonal sweep bottom-right → top-left */
+/* Fill triggered by JS — edge sweeps from bottom-right (period) to top-left (S) */
 .hero-name.name-filled .hero-name-line {
-  background-position: 0% 0%;
+  background-position: 100% 100%;
 }
 
 /* After fill completes, strip the background-attachment:fixed to prevent

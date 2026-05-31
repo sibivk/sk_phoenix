@@ -180,7 +180,7 @@ function runInkDrop() {
               line.classList.add('fill-complete');
             });
           }
-        }, 2500);
+        }, 3500);
       }
     }
   }

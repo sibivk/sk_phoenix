@@ -172,6 +172,12 @@ body:has(button:hover) .cursor {
   opacity: 0.55;
   transition: opacity 0.3s ease;
   position: relative;
+  /* Subtle dark outline so letters stay readable against light backgrounds */
+  text-shadow:
+    -1px -1px 0 rgba(0,0,0,0.45),
+     1px -1px 0 rgba(0,0,0,0.45),
+    -1px  1px 0 rgba(0,0,0,0.45),
+     1px  1px 0 rgba(0,0,0,0.45);
 }
 
 .nav-links a::after {
@@ -300,7 +306,7 @@ body:has(button:hover) .cursor {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  transition: background-position 3.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-position 4.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Fill triggered by JS — edge sweeps from bottom-right (period) to top-left (S) */

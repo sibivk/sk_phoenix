@@ -404,7 +404,14 @@ document.querySelectorAll('.nav-links a, .footer-nav a').forEach(link => {
           if (active) { active.classList.remove('ic-active', 'ic-expanding', 'ic-reveal'); }
           active = card;
           card.classList.add('ic-active');
-          requestAnimationFrame(() => card.classList.add('ic-reveal'));
+          requestAnimationFrame(() => {
+            card.classList.add('ic-reveal');
+            // Scroll the meta into view so the glitch is visible when it fires.
+            // 120 ms lets ic-active styles paint first; smooth scroll then brings
+            // the meta to centre-screen just as the lines start glitching.
+            const meta = card.querySelector('.ic-meta');
+            if (meta) setTimeout(() => meta.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
+          });
         }
         return;
       }

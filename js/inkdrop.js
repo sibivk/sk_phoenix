@@ -67,7 +67,7 @@ function runInkDrop() {
   function easeIn(t)    { return t * t * t; }
   function clamp(v,a,b) { return Math.max(a, Math.min(b, v)); }
 
-  // Black fill + white stroke — matches the outlined text state before fill.
+  // Transparent centre + white stroke — hero background shows through the ball.
   function drawBall(x, y, r, sq, alpha) {
     if (alpha <= 0) return;
     ctx.save();
@@ -77,8 +77,7 @@ function runInkDrop() {
     ctx.scale(1 + sq * 0.45, 1 - sq * 0.30);
     ctx.beginPath();
     ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fillStyle = '#000';
-    ctx.fill();
+    // No fill — transparent centre so the hero background shows through
     ctx.strokeStyle = 'rgba(255,255,255,0.88)';
     ctx.lineWidth = Math.max(1.5, r * 0.13);
     ctx.stroke();

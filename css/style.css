@@ -318,10 +318,14 @@ body:has(button:hover) .cursor {
    scroll repaints. fill-complete is added by JS ~2.5 s after name-filled. */
 .hero-name-line.fill-complete {
   -webkit-text-fill-color: #fff;
-  -webkit-text-stroke: 0;
+  /* Retain the same 2.5px stroke in white — visually identical to the filled
+     state but removes background-attachment:fixed (the scroll repaint source).
+     Setting stroke to 0 caused letters to thin noticeably. */
+  -webkit-text-stroke: 2.5px rgba(255,255,255,0.80);
   background: none !important;
   -webkit-background-clip: unset !important;
   background-clip: unset !important;
+  transition: none; /* suppress any residual background-position transition */
 }
 
 .hero-rule {
@@ -1267,6 +1271,13 @@ body:has(button:hover) .cursor {
     max-height: 200px;
   }
   .incarnation-card.ic-active .ic-meta { margin-top: 1rem; }
+
+  /* Tighter letter-spacing on mobile so long lines (e.g. GOD MODE ARCH line)
+     don't wrap and orphan the closing ']' onto a second line. */
+  .ic-meta-line {
+    letter-spacing: 0.07em;
+    font-size: 0.52rem;
+  }
 
   /* Mobile glitch delays — scroll brings meta into view ~300ms after ic-reveal,
      so start glitching as it arrives rather than after the desktop wait. */

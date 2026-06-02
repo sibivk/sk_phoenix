@@ -423,3 +423,41 @@ document.querySelectorAll('.nav-links a, .footer-nav a').forEach(link => {
     });
   });
 })();
+
+// ── In Lab GIF — plays once on scroll, replays on hover ─────────────────────
+// The GIF is set to loop:1 (plays through once then stops).
+// Resetting img.src forces a full restart from frame 1.
+(function initInLab() {
+  const frame = document.getElementById('inlabFrame');
+  if (!frame) return;
+  const img = frame.querySelector('.inlab-gif');
+  if (!img) return;
+
+  const gifSrc  = img.dataset.gif;
+  const poster  = img.src; // initial poster (first-frame JPEG)
+  let played = false;
+
+  function play() {
+    frame.classList.add('gif-playing');
+    img.src = '';          // flush cached GIF so browser re-downloads from frame 1
+    img.src = gifSrc;
+  }
+
+  function reset() {
+    frame.classList.remove('gif-playing');
+    img.src = poster;      // back to static poster between plays
+  }
+
+  // Play once when frame scrolls into view (30 % visible threshold)
+  new IntersectionObserver((entries, obs) => {
+    if (entries[0].isIntersecting && !played) {
+      played = true;
+      play();
+      obs.disconnect();
+    }
+  }, { threshold: 0.3 }).observe(frame);
+
+  // Replay on hover; reset when cursor leaves
+  frame.addEventListener('mouseenter', () => { if (played) play(); });
+  frame.addEventListener('mouseleave', () => reset());
+})();

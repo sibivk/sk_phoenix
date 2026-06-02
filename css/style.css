@@ -1288,6 +1288,87 @@ body:has(button:hover) .cursor {
 }
 
 /* ============================
+   IN LAB
+   ============================ */
+.inlab-intro {
+  font-size: clamp(0.72rem, 0.9vw, 0.88rem);
+  font-weight: 300;
+  line-height: 1.9;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.35);
+  max-width: 580px;
+  margin-top: 1.4rem;
+  margin-bottom: 3rem;
+}
+
+/* Frame — contains the gif, vignette overlay, and glitch layer */
+.inlab-frame {
+  position: relative;
+  display: block;
+  max-width: 880px;
+  cursor: pointer;
+  overflow: visible;
+}
+
+/* Vignette overlay — same radial-gradient approach as incarnations images.
+   Static, painted once, zero per-frame cost. */
+.inlab-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 82% 88% at 50% 50%,
+    transparent 28%,
+    rgba(0,0,0,0.42) 52%,
+    rgba(0,0,0,0.88) 74%,
+    #000 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Poster / GIF element — monochrome via CSS filter */
+.inlab-gif {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: grayscale(1);
+}
+
+/* ── Glitch animation ────────────────────────────────────────────────────
+   Three short bursts spread across an 8-second cycle to match the GIF
+   duration (~202 frames × 40 ms ≈ 8 s).  All GPU-composited properties.  */
+@keyframes inlabGlitch {
+  /* Burst 1 — ~1.6 s into the 8 s cycle */
+  0%, 19.5%  { transform: translate(0,0);      clip-path: inset(0); opacity: 1; }
+  20%        { transform: translate(-7px, 2px); clip-path: inset(12% 0 48% 0); opacity: 0.85; }
+  20.5%      { transform: translate(9px, -1px); clip-path: inset(58% 0 6% 0);  opacity: 0.9; }
+  21%        { transform: translate(-4px, 3px); clip-path: inset(28% 0 36% 0); opacity: 0.85; }
+  21.5%      { transform: translate(0, 0);      clip-path: inset(0); opacity: 1; }
+  /* Burst 2 — ~3.6 s */
+  44.5%      { transform: translate(0, 0); clip-path: inset(0); }
+  45%        { transform: translate(8px, -3px); clip-path: inset(55% 0 10% 0); opacity: 0.8; }
+  45.5%      { transform: translate(-6px, 1px); clip-path: inset(5% 0 62% 0);  opacity: 0.9; }
+  46%        { transform: translate(0, 0);       clip-path: inset(0); opacity: 1; }
+  /* Burst 3 — ~5.6 s */
+  69.5%      { transform: translate(0, 0); clip-path: inset(0); }
+  70%        { transform: translate(-8px, 2px);  clip-path: inset(38% 0 25% 0); opacity: 0.85; }
+  70.5%      { transform: translate(6px, -2px);  clip-path: inset(8% 0 55% 0);  opacity: 0.9; }
+  71%        { transform: translate(0, 0);        clip-path: inset(0); opacity: 1; }
+  100%       { transform: translate(0, 0);        clip-path: inset(0); opacity: 1; }
+}
+
+/* Glitch fires only while the GIF is playing */
+.inlab-frame.gif-playing .inlab-gif {
+  animation: inlabGlitch 8s steps(1) 1 forwards;
+}
+
+/* Pause when tab hidden */
+.tab-hidden .inlab-gif {
+  animation-play-state: paused;
+}
+
+/* ============================
    FOOTER
    ============================ */
 .footer {

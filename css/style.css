@@ -1319,8 +1319,8 @@ body:has(button:hover) .cursor {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to right,  #000 0%, transparent 20%,  transparent 80%,  #000 100%),
-    linear-gradient(to bottom, #000 0%, transparent 14%,  transparent 84%,  #000 100%);
+    linear-gradient(to right,  #000 0%, transparent 34%,  transparent 66%,  #000 100%),
+    linear-gradient(to bottom, #000 0%, transparent 22%,  transparent 78%,  #000 100%);
   pointer-events: none;
   z-index: 2;
 }

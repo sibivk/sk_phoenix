@@ -424,47 +424,51 @@ document.querySelectorAll('.nav-links a, .footer-nav a').forEach(link => {
   });
 })();
 
-// ── In Lab GIF — plays on scroll-in, nav-click, and hover ───────────────────
-// GIF has loop:1 baked in — plays through once then stops automatically.
-// Resetting img.src to '' then gifSrc restarts from frame 1 every time.
+// ── In Lab GIF ───────────────────────────────────────────────────────────────
+// GIF is loop:0 (infinite) so src-reset reliably restarts from frame 1
+// via browser cache.  A JS timer stops it after one play cycle (~8420 ms)
+// by replacing with the static poster.  play() cancels any running timer
+// so rapid re-triggers always start clean from frame 1.
 (function initInLab() {
   const frame = document.getElementById('inlabFrame');
   if (!frame) return;
   const img = frame.querySelector('.inlab-gif');
   if (!img) return;
 
-  const gifSrc = img.dataset.gif;
-  const poster = img.src; // initial first-frame JPEG
+  const gifSrc      = img.dataset.gif;
+  const poster      = img.src;          // first-frame JPEG
+  const GIF_MS      = 8600;             // 8420 ms actual + small buffer
+  let   playTimer   = null;
 
   function play() {
+    clearTimeout(playTimer);
     frame.classList.add('gif-playing');
-    img.src = '';       // flush so browser restarts from frame 1
+    img.src = '';                        // flush — forces restart from frame 1
     img.src = gifSrc;
+    playTimer = setTimeout(reset, GIF_MS); // stop after one cycle
   }
 
   function reset() {
+    clearTimeout(playTimer);
     frame.classList.remove('gif-playing');
-    img.src = poster;   // back to static poster
+    img.src = poster;
   }
 
-  // Play every time the section enters the viewport (30 % visible).
-  // Reset to poster when it leaves — so returning always shows a fresh play.
+  // Play every time the section scrolls into view; reset when it leaves.
   new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting) {
-      play();
-    } else {
-      reset();
-    }
-  }, { threshold: 0.3 }).observe(frame);
+    if (entries[0].isIntersecting) play();
+    else                           reset();
+  }, { threshold: 0.25 }).observe(frame);
 
-  // Also play immediately when a nav / footer "In Lab" link is clicked.
-  // The smooth scroll might take ~600 ms; delay long enough for the section
-  // to be visible so the IO callback and this don't double-fire visibly.
+  // Nav / footer link click → play after scroll settles
   document.querySelectorAll('a[href="#inlab"]').forEach(link => {
     link.addEventListener('click', () => setTimeout(play, 650));
   });
 
-  // Replay on hover; reset when cursor leaves
+  // Click on the frame → replay from frame 1
+  frame.addEventListener('click', play);
+
+  // Hover → replay; leave → reset
   frame.addEventListener('mouseenter', play);
   frame.addEventListener('mouseleave', reset);
 })();

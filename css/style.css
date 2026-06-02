@@ -1311,19 +1311,16 @@ body:has(button:hover) .cursor {
   overflow: visible;
 }
 
-/* Vignette overlay — same radial-gradient approach as incarnations images.
+/* Vignette overlay — two stacked linear-gradients cover all four edges,
+   ensuring the image border fully dissolves into the dark background.
    Static, painted once, zero per-frame cost. */
 .inlab-frame::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    ellipse 82% 88% at 50% 50%,
-    transparent 28%,
-    rgba(0,0,0,0.42) 52%,
-    rgba(0,0,0,0.88) 74%,
-    #000 100%
-  );
+  background:
+    linear-gradient(to right,  #000 0%, transparent 20%,  transparent 80%,  #000 100%),
+    linear-gradient(to bottom, #000 0%, transparent 14%,  transparent 84%,  #000 100%);
   pointer-events: none;
   z-index: 2;
 }

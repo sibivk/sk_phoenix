@@ -1306,6 +1306,7 @@ body:has(button:hover) .cursor {
   position: relative;
   display: block;
   max-width: 880px;
+  margin: 0 auto;   /* centre within section */
   cursor: pointer;
   overflow: visible;
 }

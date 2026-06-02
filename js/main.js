@@ -424,40 +424,47 @@ document.querySelectorAll('.nav-links a, .footer-nav a').forEach(link => {
   });
 })();
 
-// ── In Lab GIF — plays once on scroll, replays on hover ─────────────────────
-// The GIF is set to loop:1 (plays through once then stops).
-// Resetting img.src forces a full restart from frame 1.
+// ── In Lab GIF — plays on scroll-in, nav-click, and hover ───────────────────
+// GIF has loop:1 baked in — plays through once then stops automatically.
+// Resetting img.src to '' then gifSrc restarts from frame 1 every time.
 (function initInLab() {
   const frame = document.getElementById('inlabFrame');
   if (!frame) return;
   const img = frame.querySelector('.inlab-gif');
   if (!img) return;
 
-  const gifSrc  = img.dataset.gif;
-  const poster  = img.src; // initial poster (first-frame JPEG)
-  let played = false;
+  const gifSrc = img.dataset.gif;
+  const poster = img.src; // initial first-frame JPEG
 
   function play() {
     frame.classList.add('gif-playing');
-    img.src = '';          // flush cached GIF so browser re-downloads from frame 1
+    img.src = '';       // flush so browser restarts from frame 1
     img.src = gifSrc;
   }
 
   function reset() {
     frame.classList.remove('gif-playing');
-    img.src = poster;      // back to static poster between plays
+    img.src = poster;   // back to static poster
   }
 
-  // Play once when frame scrolls into view (30 % visible threshold)
-  new IntersectionObserver((entries, obs) => {
-    if (entries[0].isIntersecting && !played) {
-      played = true;
+  // Play every time the section enters the viewport (30 % visible).
+  // Reset to poster when it leaves — so returning always shows a fresh play.
+  new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
       play();
-      obs.disconnect();
+    } else {
+      reset();
     }
   }, { threshold: 0.3 }).observe(frame);
 
+  // Also play immediately when a nav / footer "In Lab" link is clicked.
+  // The smooth scroll might take ~600 ms; delay long enough for the section
+  // to be visible so the IO callback and this don't double-fire visibly.
+  document.querySelectorAll('a[href="#inlab"]').forEach(link => {
+    link.addEventListener('click', () => setTimeout(play, 650));
+  });
+
   // Replay on hover; reset when cursor leaves
-  frame.addEventListener('mouseenter', () => { if (played) play(); });
-  frame.addEventListener('mouseleave', () => reset());
+  frame.addEventListener('mouseenter', play);
+  frame.addEventListener('mouseleave', reset);
 })();

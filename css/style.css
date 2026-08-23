@@ -849,6 +849,7 @@ body:has(button:hover) .cursor {
 .section-incarnations .incarnation-card.d-1 { --d: 0s;    }
 .section-incarnations .incarnation-card.d-2 { --d: 0.20s; }
 .section-incarnations .incarnation-card.d-3 { --d: 0.40s; }
+.section-incarnations .incarnation-card.d-4 { --d: 0.60s; }
 
 .incarnations-intro {
   font-size: clamp(0.72rem, 0.9vw, 0.88rem);
@@ -863,7 +864,7 @@ body:has(button:hover) .cursor {
 
 .incarnations-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   border-top: 1px solid rgba(255,255,255,0.07);
   border-bottom: 1px solid rgba(255,255,255,0.07);
   margin-top: 3rem;
@@ -908,6 +909,10 @@ body:has(button:hover) .cursor {
 }
 .ic-3::before {
   background: radial-gradient(ellipse at 75% 65%,
+    rgba(255,255,255,0.05) 0%, transparent 65%);
+}
+.ic-4::before {
+  background: radial-gradient(ellipse at 100% 65%,
     rgba(255,255,255,0.05) 0%, transparent 65%);
 }
 
@@ -1018,6 +1023,13 @@ body:has(button:hover) .cursor {
   font-size: clamp(3rem, 5.2vw, 7.2rem);
   color: rgba(255,255,255,0.52);
   letter-spacing: 0.03em;
+}
+
+/* ZION — sovereign white, stroke layered beneath */
+.ic-4 .incarnation-name {
+  font-size: clamp(2.8rem, 4.8vw, 6.8rem);
+  color: var(--white);
+  -webkit-text-stroke: 0.5px rgba(255,255,255,0.6);
 }
 
 /* Expanding rule on hover — transform:scaleX is GPU composited */
@@ -1540,6 +1552,7 @@ body.nav-scrolling .ic-img {
   .ic-1 .incarnation-name { font-size: clamp(3.5rem, 22vw, 6rem); }
   .ic-2 .incarnation-name { font-size: clamp(2.8rem, 18vw, 5rem); }
   .ic-3 .incarnation-name { font-size: clamp(2.6rem, 17vw, 4.8rem); }
+  .ic-4 .incarnation-name { font-size: clamp(2.6rem, 17vw, 4.8rem); }
 
   .incarnation-bg-name { font-size: clamp(6rem, 28vw, 10rem); }
 
